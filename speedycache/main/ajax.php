@@ -698,7 +698,7 @@ function speedycache_hide_promo(){
 		wp_die('Must be admin');
 	}
 	
-	update_option('speedycache_promo_time', (0 - time()));
+	update_option('speedycache_promo_time', (0 - time()), false);
 	die('DONE');
 }
 
@@ -729,7 +729,7 @@ function speedycache_hide_nag(){
 		wp_die('Must be admin');
 	}
 	
-	update_option('speedycache_enable_nag', time());
+	update_option('speedycache_enable_nag', time(), false);
 	die('DONE');
 }
 
@@ -804,9 +804,9 @@ function speedycache_test_score(){
 
 	// Saving data to keep last test
 	if(!empty($_GET['test_speedycache'])){
-		update_option('speedycache_new_speed', $body['results']);
+		update_option('speedycache_new_speed', $body['results'], false);
 	} else {
-		update_option('speedycache_old_speed', $body['results']);
+		update_option('speedycache_old_speed', $body['results'], false);
 	}
 	
 	wp_send_json_success($body['results']);

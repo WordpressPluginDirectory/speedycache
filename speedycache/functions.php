@@ -40,7 +40,7 @@ function speedycache_exclude_urls(){
 
 	if($rules_json === false){
 		array_push($rules_arr, $new_rule);
-		update_option('speedycache_exclude', $rules_arr, null, 'yes');
+		update_option('speedycache_exclude', $rules_arr, true);
 		
 		return;
 	}

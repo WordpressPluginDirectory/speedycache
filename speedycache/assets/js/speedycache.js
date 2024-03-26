@@ -633,18 +633,22 @@ jQuery(document).ready(function() {
 	});
 	
 	jQuery('#speedycache_render_blocking').change(function() {
-		if(jQuery(this).is(':checked')) {
-			return;
-		}
-		
-		if(jQuery('#speedycache_google_fonts').is(':checked')) {
-			jQuery('#speedycache_render_blocking').prop('checked', true);
-			speedycache_tooltip({
-				jEle : jQuery('#speedycache_google_fonts').closest('label'),
-				html : 'Turn This off first',
-			});
-		}
-	});
+        if(!jQuery(this).is(':checked')){
+            speedycache_toggle_settings_link(jQuery(this));
+            return;
+        }
+        speedycache_toggle_settings_link(jQuery(this));
+        speedycache_open_modal(jQuery(this));
+       
+        if(jQuery('#speedycache_google_fonts').is(':checked')) {
+            jQuery('#speedycache_render_blocking').prop('checked', true);
+            speedycache_tooltip({
+                jEle : jQuery('#speedycache_google_fonts').closest('label'),
+                html : 'Turn This off first',
+            });
+        }
+    });
+
 	
 	jQuery('#speedycache_google_fonts').change(function() {
 		if(!jQuery(this).is(':checked')) {
@@ -662,9 +666,6 @@ jQuery(document).ready(function() {
 		}
 		
 		speedycache_toggle_settings_link(jQuery(this));
-		
-		jQuery('#speedycache_mobile').prop('checked', true);
-		jQuery('#speedycache_mobile_theme').prop('checked', true);
 		
 		speedycache_open_modal(jQuery(this));
 		speedycache_lazy_load_settings(jQuery(this));

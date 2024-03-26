@@ -23,7 +23,7 @@ class Gravatar{
 		$path = speedycache_cache_path('gravatars/');
 
 		if(!is_dir($path)){
-			mkdir($path);
+			mkdir($path, 0755, true);
 			touch($path . 'index.html');
 		}
 
@@ -110,6 +110,10 @@ class Gravatar{
 	static function delete(){
 		$path = speedycache_cache_path('gravatars/');
 		
+		if(!file_exists($path)){
+			return;
+		}
+
 		$files = scandir($path);
 		
 		if(empty($files)){

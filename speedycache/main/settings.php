@@ -9,6 +9,34 @@ if( !defined('SPEEDYCACHE_VERSION') ){
 	die('Hacking Attempt!');
 }
 
+function speedycache_add_javascript(){
+	global $speedycache;
+	
+	wp_enqueue_script('jquery-ui-sortable');
+	
+	$speedycache_ajax_url = admin_url().'admin-ajax.php';
+	$speedycache_nonce = wp_create_nonce('speedycache_nonce');
+	$speedycache_schedules = wp_get_schedules();
+	$preload_order = !isset($speedycache->options['preload_order']) ? '' : $speedycache->options['preload_order'];
+	$lang = !isset($speedycache->options['language']) ? 'en' : $speedycache->options['language'];
+
+	wp_enqueue_script('speedycache_js', SPEEDYCACHE_URL . '/assets/js/speedycache.js', array(), SPEEDYCACHE_VERSION, false);
+	
+	wp_localize_script('speedycache_js', 'speedycache_ajax', array(
+		'url' => $speedycache_ajax_url,
+		'nonce' => $speedycache_nonce,
+		'schedules' => $speedycache_schedules,
+		'home_url' => home_url(),
+		'timeout_rules' => speedycache_get_timeout_rules(),
+		'exclude_rules' => get_option('speedycache_exclude'),
+		'cdn' => get_option('speedycache_cdn'),
+		'preload_order' => $preload_order,
+		'lang' => $lang,
+		'sitepad' => defined('SITEPAD'),
+		'premium' => defined('SPEEDYCACHE_PRO') ? true : false
+	));
+}
+
 function speedycache_page_footer($tweet = false){
 	
 	if(!defined('SITEPAD')){
@@ -231,6 +259,11 @@ function speedycache_save_settings(){
 	// Lazy Load HTML element list
 	if( isset($_POST['submit']) || isset($_POST['speedycache_lazy_load_html_elements']) ){
 		$speedycache->options['lazy_load_html_elements'] = empty($_POST['speedycache_lazy_load_html_elements']) ? [] : explode(' ', speedycache_optpost('speedycache_lazy_load_html_elements'));
+	}
+
+	// Render Blocking js exclude
+	if( isset($_POST['submit']) || isset($_POST['speedycache_render_blocking_excludes']) ){
+		$speedycache->options['render_blocking_exclude'] = empty($_POST['speedycache_render_blocking_excludes']) ? [] : explode(' ', speedycache_optpost('speedycache_render_blocking_excludes'));
 	}
 	
 	// Critical CSS
@@ -2092,10 +2125,38 @@ function speedycache_settings_page(){
 										<div class="speedycache-input-slider"></div>
 									</label>
 									<div class="speedycache-option-info">
-										<span class="speedycache-option-name"><?php esc_html_e('Render Blocking JS', 'speedycache'); ?></span>
-										<span class="speedycache-option-desc"><?php esc_html_e('Defers render-blocking JavaScript resources', 'speedycache'); ?></span>
+										<span class="speedycache-option-name" setting-id="speedycache_render_blocking"><?php esc_html_e('Render Blocking JS', 'speedycache'); ?>
+										<span class="speedycache-modal-settings-link" setting-id="speedycache_render_blocking" style="display:<?php echo (!empty($speedycache->options['render_blocking']) ? 'inline-block' : 'none'); ?>;">- Settings</span>
+										</span><span class="speedycache-option-desc"><?php esc_html_e('Defers render-blocking JavaScript resources', 'speedycache'); ?></span>
 									</div>
 								</div>
+
+								<div modal-id="speedycache_render_blocking" class="speedycache-modal">
+								<div class="speedycache-modal-wrap">
+									<div class="speedycache-modal-header">
+										<div><?php esc_html_e('Render Blocking JS', 'speedycache'); ?></div>
+										<div title="Close Modal" class="speedycache-close-modal">
+											<span class="dashicons dashicons-no"></span>
+										</div>
+									</div>
+									<div class="speedycache-modal-content speedycache-info-modal">
+										
+										<div>
+											<label for="speedycache_render_blocking_excludes" style="width:100%;">
+												<span style="font-weight:500; margin:20px 0 3px 0; display:block;"><?php esc_html_e('Exclude script from Render Blocking JS', 'speedycache'); ?></span>
+												<span style="display:block; font-weight:400; font-size:12px; color: #2c2a2a;"><?php esc_html_e('Add one script per line ,Enter the script URL or script ID', 'speedycache'); ?></span>
+												<textarea name="speedycache_render_blocking_excludes"id="speedycache_render_blocking_excludes" rows="4" style="width:100%"><?php echo !empty($speedycache->options['render_blocking_exclude']) ? esc_html(implode("\n", $speedycache->options['render_blocking_exclude'])) : '';?></textarea>
+											</label>
+										</div>
+										<div class="speedycache-modal-footer">
+											<button type="button" action="close">
+												<span><?php esc_html_e('Submit', 'speedycache'); ?></span>
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+								
 	
 							<?php } else { ?>
 								<div class="speedycache-option-wrap speedycache-disabled">
@@ -3867,35 +3928,6 @@ function speedycache_promotion_tmpl(){
 		</div>
 	</div>
 <?php
-}
-
-
-function speedycache_add_javascript(){
-	global $speedycache;
-	
-	wp_enqueue_script('jquery-ui-sortable');
-	
-	$speedycache_ajax_url = admin_url().'admin-ajax.php';
-	$speedycache_nonce = wp_create_nonce('speedycache_nonce');
-	$speedycache_schedules = wp_get_schedules();
-	$preload_order = !isset($speedycache->options['preload_order']) ? '' : $speedycache->options['preload_order'];
-	$lang = !isset($speedycache->options['language']) ? 'en' : $speedycache->options['language'];
-
-	wp_enqueue_script('speedycache_js', SPEEDYCACHE_URL . '/assets/js/speedycache.js', array(), SPEEDYCACHE_VERSION, false);
-	
-	wp_localize_script('speedycache_js', 'speedycache_ajax', array(
-		'url' => $speedycache_ajax_url,
-		'nonce' => $speedycache_nonce,
-		'schedules' => $speedycache_schedules,
-		'home_url' => home_url(),
-		'timeout_rules' => speedycache_get_timeout_rules(),
-		'exclude_rules' => get_option('speedycache_exclude'),
-		'cdn' => get_option('speedycache_cdn'),
-		'preload_order' => $preload_order,
-		'lang' => $lang,
-		'sitepad' => defined('SITEPAD'),
-		'premium' => defined('SPEEDYCACHE_PRO') ? true : false
-	));
 }
 
 function speedycache_options_page_request(){

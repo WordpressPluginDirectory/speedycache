@@ -8,7 +8,7 @@
 //ABSPATH is required.	
 if(!defined('ABSPATH')) exit;
 
-define('SPEEDYCACHE_VERSION', '1.1.4');
+define('SPEEDYCACHE_VERSION', '1.1.5');
 define('SPEEDYCACHE_DIR', dirname( __FILE__ ));
 define('SPEEDYCACHE_BASE', plugin_basename(SPEEDYCACHE_FILE));
 define('SPEEDYCACHE_URL', plugins_url('', __FILE__));
@@ -128,7 +128,7 @@ function speedycache_load_plugin(){
 	}
 
 	$speedycache->options = get_option('speedycache_options', []);
-	$speedycache->options['post_types'] = empty($speedycache->options['post_types']) ? ['page', 'post', 'product', 'docs'] :$speedycache->options['post_types'];
+	$speedycache->options['post_types'] = empty($speedycache->options['post_types']) ? ['page', 'post', 'product', 'docs'] : $speedycache->options['post_types'];
 	$speedycache->settings['noscript'] = '';
 	$speedycache->settings['content_url'] = '';
 	$speedycache->settings['is_multi'] = is_multisite();
@@ -187,12 +187,12 @@ function speedycache_load_plugin(){
 	add_action('comment_post', '\SpeedyCache\Delete::comment_post', 10, 2); // Works when a comment is saved in the database
 	add_action('edit_comment', '\SpeedyCache\Delete::edit_comment', 10, 2); // Works when a comment is updated
 
-	if(defined('SPEEDYCACHE_PRO') && is_admin() && current_user_can('activate_plugins')){
+	if(!defined('SPEEDYCACHE_PRO') && is_admin() && current_user_can('activate_plugins')){
 		// The promo time
 		$promo_time = get_option('speedycache_promo_time');
 		if(empty($promo_time)){
 			$promo_time = time();
-			update_option('speedycache_promo_time', $promo_time);
+			update_option('speedycache_promo_time', $promo_time, false);
 		}
 
 		// Are we to show the SpeedyCache promo

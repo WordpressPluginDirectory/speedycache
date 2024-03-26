@@ -74,12 +74,14 @@ if(preg_match('/\/([^\/]+)\/([^\/]+(\.css|\.js))(\?.+)?$/', speedycache_current_
 	}
 
 	//for non-exists files
-	if(preg_match('/\.css/', speedycache_current_url())){
-		header('Content-type: text/css');
-		die('/* File not found */');
-	}else if(preg_match('/\.js/', speedycache_current_url())){
-		header('Content-type: text/js');
-		die('/*File not found*/');
+	if(preg_match("/\/speedycache.*\/assets\//i", speedycache_current_url())){
+		if(preg_match('/\.css/', speedycache_current_url())){
+			header('Content-type: text/css');
+			die('/* File not found */');
+		}else if(preg_match('/\.js/', speedycache_current_url())){
+			header('Content-type: text/js');
+			die('/*File not found*/');
+		}
 	}
 
 // Regular HTML

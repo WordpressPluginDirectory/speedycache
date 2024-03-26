@@ -2,9 +2,9 @@
 Contributors: softaculous
 Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy loading, mobile cache, minify css, combine css, minify js, combine js, gzip, browser caching, render blocking js, preload, widget cache, softaculous, speedycache, performance
 Requires at least: 4.7
-Tested up to: 6.4
+Tested up to: 6.5
 Requires PHP: 7.3
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: LGPL v2.1
 License URI: http://www.gnu.org/licenses/lgpl-2.1.html
 
@@ -145,6 +145,13 @@ You can either go to the Delete Cache Tab where you will find Stats about the Ca
 4. SpeedyCache Exclude page
 
 == Changelog ==
+
+= 1.1.5 (25nd March 2024) =
+* [Bug-Fix] There was an issue with preload that has been fixed.
+* [Bug-Fix] There was a conflict with SuperPWA that has been fixed.
+* [Bug-Fix] PHP Warnings have been fixed.
+* [Task] Tested with WordPress 6.5.
+* [Pro Feature] Option to exclude JS files from getting deferred.
 
 = 1.1.4 (15th December 2023) =
 * [Security] There was a privilege check which has been fixed. (Reported by Lucio Sá)

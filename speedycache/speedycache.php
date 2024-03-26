@@ -3,7 +3,7 @@
 Plugin Name: SpeedyCache
 Plugin URI: https://speedycache.com
 Description: SpeedyCache is a plugin that helps you reduce the load time of your website by means of caching, minification, and compression of your website.
-Version: 1.1.4
+Version: 1.1.5
 Author: Softaculous Team
 Author URI: https://speedycache.com/
 Text Domain: speedycache

@@ -133,7 +133,7 @@ function speedycache_base_promo(){
 				<a class="speedycache_button speedycache_button1" target="_blank" href="https://speedycache.com/pricing">Upgrade to Pro</a>
 				<a class="speedycache_button speedycache_button2" target="_blank" href="https://wordpress.org/support/view/plugin-reviews/speedycache">Rate it 5★\'s</a>
 				<a class="speedycache_button speedycache_button3" target="_blank" href="https://www.facebook.com/speedycache/">Like Us on Facebook</a>
-				<a class="speedycache_button speedycache_button4" target="_blank" href="https://twitter.com/intent/tweet?text='.rawurlencode('I use @speedycache improve performance of my #WordPress site - https://speedycache.com').'">Tweet about SpeedyCache</a>
+				<a class="speedycache_button speedycache_button4" target="_blank" href="https://twitter.com/intent/tweet?text='.rawurlencode('I use @speedycache to improve performance of my #WordPress site - https://speedycache.com').'">Tweet about SpeedyCache</a>
 			</p>
 			<p style="font-size:16px">SpeedyCache Pro comes with features like <b>Critical CSS, Render-blocking JS, Async Google Fonts, Lazy Load, etc.</b> that speed your website further.</p>
 	</td>

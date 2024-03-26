@@ -305,7 +305,7 @@ class Precache{
 			return;
 		}
 
-		if(empty($pre_load['homepage']) || $pre_load['homepage'] <= -1){
+		if(!isset($pre_load['homepage']) || $pre_load['homepage'] <= -1){
 			return;
 		}
 
@@ -328,7 +328,7 @@ class Precache{
 			return;
 		}
 
-		if($number <= 0 || empty($pre_load['custom_post_types']) || $pre_load['custom_post_types'] <= -1){
+		if($number <= 0 || !isset($pre_load['custom_post_types']) || $pre_load['custom_post_types'] <= -1){
 			return;
 		}
 
@@ -375,7 +375,7 @@ class Precache{
 			return;
 		}
 		
-		if($number <= 0 || empty($pre_load['post']) || $pre_load['post'] <= -1){
+		if($number <= 0 || !isset($pre_load['post']) || $pre_load['post'] <= -1){
 			return;
 		}
 
@@ -408,7 +408,7 @@ class Precache{
 			return;
 		}
 		
-		if($number <= 0 || empty($pre_load['attachment']) || $pre_load['attachment'] <= -1){
+		if($number <= 0 || !isset($pre_load['attachment']) || $pre_load['attachment'] <= -1){
 			return;
 		}
 
@@ -439,7 +439,7 @@ class Precache{
 			return;
 		}
 
-		if($number <= 0 || empty($pre_load['page']) || $pre_load['page'] <= -1){
+		if($number <= 0 || !isset($pre_load['page']) || $pre_load['page'] <= -1){
 			return;
 		}
 
@@ -472,7 +472,7 @@ class Precache{
 			return;
 		}
 
-		if($number <= 0 || empty($pre_load['category']) || $pre_load['category'] <= -1){
+		if($number <= 0 || !isset($pre_load['category']) || $pre_load['category'] <= -1){
 			return;
 		}
 
@@ -511,7 +511,7 @@ class Precache{
 			return;
 		}
 
-		if($number <= 0 || empty($pre_load['tag']) || $pre_load['tag'] <= -1){
+		if($number <= 0 || !isset($pre_load['tag']) || $pre_load['tag'] <= -1){
 			return;
 		}
 
@@ -551,7 +551,7 @@ class Precache{
 			return;
 		}
 
-		if($number <= 0 && empty($pre_load['custom_taxonomies']) || (isset($pre_load['custom_taxonomies']) && $pre_load['custom_taxonomies'] <= -1)){
+		if($number <= 0 && !isset($pre_load['custom_taxonomies']) || (isset($pre_load['custom_taxonomies']) && $pre_load['custom_taxonomies'] <= -1)){
 			return;
 		}
 
