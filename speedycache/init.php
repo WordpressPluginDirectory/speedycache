@@ -8,7 +8,7 @@
 //ABSPATH is required.	
 if(!defined('ABSPATH')) exit;
 
-define('SPEEDYCACHE_VERSION', '1.1.5');
+define('SPEEDYCACHE_VERSION', '1.1.6');
 define('SPEEDYCACHE_DIR', dirname( __FILE__ ));
 define('SPEEDYCACHE_BASE', plugin_basename(SPEEDYCACHE_FILE));
 define('SPEEDYCACHE_URL', plugins_url('', __FILE__));

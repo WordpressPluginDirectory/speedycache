@@ -4,9 +4,9 @@ Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy l
 Requires at least: 4.7
 Tested up to: 6.5
 Requires PHP: 7.3
-Stable tag: 1.1.5
-License: LGPL v2.1
-License URI: http://www.gnu.org/licenses/lgpl-2.1.html
+Stable tag: 1.1.6
+License: GPLv3 or later
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 
 == Description ==
@@ -129,6 +129,9 @@ Data cleanup cleans the database by removing the following data:-
 5. All Transient options
 6. Expired Transient Options
 
+== Credits ==
+Forked from WP Fastest Cache [https://wordpress.org/plugins/wp-fastest-cache/](https://wordpress.org/plugins/wp-fastest-cache/)
+
 == Frequently Asked Questions ==
 
 = How to install SpeedyCache =
@@ -145,6 +148,11 @@ You can either go to the Delete Cache Tab where you will find Stats about the Ca
 4. SpeedyCache Exclude page
 
 == Changelog ==
+
+= 1.1.6 (20th April 2024) =
+* [Task] Changed the license to GNU GPLv3.
+* [Bug-Fix] There was an issue with Minify HTML that has been fixed.
+* [Bug-Fix] There was an issue with render blocking JS which has been fixed.
 
 = 1.1.5 (25nd March 2024) =
 * [Bug-Fix] There was an issue with preload that has been fixed.
