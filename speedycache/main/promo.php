@@ -107,7 +107,7 @@ jQuery(document).ready( function() {
 			$("#speedycache_promo").hide();
 			
 			// Save this preference
-			$.get("'.admin_url('admin-ajax.php?action=speedycache_hide_promo').'&security='.wp_create_nonce('speedycache_promo_nonce').'", data, function(response) {
+			$.get("'.esc_url(admin_url('admin-ajax.php?action=speedycache_hide_promo')).'&security='.esc_js(wp_create_nonce('speedycache_promo_nonce')).'", data, function(response) {
 				//alert(response);
 			});
 		});
@@ -123,7 +123,7 @@ function speedycache_base_promo(){
 	<table>
 	<tr>
 		<th>
-			<img src="'.SPEEDYCACHE_URL.'/assets/images/logo.png" style="float:left; margin:10px 20px 10px 10px" width="100" />
+			<img src="'.esc_url(SPEEDYCACHE_URL).'/assets/images/logo.png" style="float:left; margin:10px 20px 10px 10px" width="100" />
 		</th>
 		<td>
 			<p style="font-size:16px;">You have been using SpeedyCache for few days and we hope SpeedyCache is able to help you speedup your Website.<br/>
@@ -133,7 +133,7 @@ function speedycache_base_promo(){
 				<a class="speedycache_button speedycache_button1" target="_blank" href="https://speedycache.com/pricing">Upgrade to Pro</a>
 				<a class="speedycache_button speedycache_button2" target="_blank" href="https://wordpress.org/support/view/plugin-reviews/speedycache">Rate it 5★\'s</a>
 				<a class="speedycache_button speedycache_button3" target="_blank" href="https://www.facebook.com/speedycache/">Like Us on Facebook</a>
-				<a class="speedycache_button speedycache_button4" target="_blank" href="https://twitter.com/intent/tweet?text='.rawurlencode('I use @speedycache to improve performance of my #WordPress site - https://speedycache.com').'">Tweet about SpeedyCache</a>
+				<a class="speedycache_button speedycache_button4" target="_blank" href="https://twitter.com/intent/tweet?text='.esc_html(rawurlencode('I use @speedycache to improve performance of my #WordPress site - https://speedycache.com')).'">Tweet about SpeedyCache</a>
 			</p>
 			<p style="font-size:16px">SpeedyCache Pro comes with features like <b>Critical CSS, Render-blocking JS, Async Google Fonts, Lazy Load, etc.</b> that speed your website further.</p>
 	</td>
@@ -153,7 +153,7 @@ jQuery(document).ready( function() {
 			$("#speedycache_enable_nag").hide();
 			
 			// Save this preference
-			$.get("'.admin_url('admin-ajax.php?action=speedycache_hide_nag').'&security='.wp_create_nonce('speedycache_promo_nonce').'", data, function(response) {
+			$.get("'.esc_url(admin_url('admin-ajax.php?action=speedycache_hide_nag')).'&security='.esc_js(wp_create_nonce('speedycache_promo_nonce')).'", data, function(response) {
 				//alert(response);
 			});
 		});
@@ -175,8 +175,8 @@ color: red;
 			<span class="dashicons dashicons-dismiss"></span> Dismiss for 7 days
 		</a>
 		<div style="display:flex; align-items:center; padding: 10px 0;">
-		<img src="'.SPEEDYCACHE_URL.'/assets/images/logo.png" width="50" height="50"/>
-		<p style="font-size:16px;">SpeedyCache is installed. Enable caching to improve website speed. <a class="button button-primary" href="'.admin_url('admin.php?page=speedycache').'">Enable Now</a> or Test SpeedyCache Settings before enabling <a class="button button-primary" href="'.admin_url('admin.php?page=speedycache-test').'">Test SpeedyCache</a></p>
+		<img src="'.esc_url(SPEEDYCACHE_URL).'/assets/images/logo.png" width="50" height="50"/>
+		<p style="font-size:16px;">SpeedyCache is installed. Enable caching to improve website speed. <a class="button button-primary" href="'.esc_url(admin_url('admin.php?page=speedycache')).'">Enable Now</a> or Test SpeedyCache Settings before enabling <a class="button button-primary" href="'.esc_url(admin_url('admin.php?page=speedycache-test')).'">Test SpeedyCache</a></p>
 		</div>
 	</div>';
 }

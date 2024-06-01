@@ -41,7 +41,12 @@ class Metabox{
 	</label>
 </div>
 '
-.apply_filters('speedycache_pro_metabox', '', speedycache_optget('post'));
+.wp_kses(apply_filters('speedycache_pro_metabox', '', speedycache_optget('post')), array_merge(wp_kses_allowed_html('post'), [
+	'div' => ['class' => true],
+	'span' => ['class' => true],
+	'input' => ['type'=> true, 'label' => true, 'value' => true, 'checked' => true, 'placeholder' => true, 'id' => true, 'name' => true],
+	'label' => ['for' => true, 'class' => true],
+]));
 
 	}
 	
@@ -70,7 +75,7 @@ class Metabox{
 			return;
 		}
 		
-		if(!wp_verify_nonce($_REQUEST['speedycache_metabox_save_nonce'], 'speedycache_metabox_save')){
+		if(!wp_verify_nonce(speedycache_optreq('speedycache_metabox_save_nonce'), 'speedycache_metabox_save')){
 			die('Security Check Failed');
 		}
 

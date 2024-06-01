@@ -9,7 +9,7 @@ if(!defined('ABSPATH')){
 	die('HACKING ATTEMPT!');
 }
 
-if(!isset($_REQUEST['security']) || strpos($_REQUEST['action'], 'speedycache_') !== 0){
+if(!isset($_REQUEST['security']) || strpos(speedycache_optreq('action'), 'speedycache_') !== 0){
 	return;
 }
 
@@ -85,15 +85,15 @@ function speedycache_ajax_verify(){
 	
 	$promo_nonce = ['speedycache_hide_nag', 'speedycache_hide_promo'];
 	
-	if(in_array($_REQUEST['action'], $promo_nonce)){
-		if(empty(wp_verify_nonce($_REQUEST['security'], 'speedycache_promo_nonce'))){
+	if(in_array(speedycache_optreq('action'), $promo_nonce)){
+		if(empty(wp_verify_nonce(speedycache_optreq('security'), 'speedycache_promo_nonce'))){
 			wp_send_json(array('success' => false, 'message' => 'Security check Failed'));
 		}
 
 		return;
 	}
 	
-	if(empty(wp_verify_nonce($_REQUEST['security'], 'speedycache_nonce'))){
+	if(empty(wp_verify_nonce(speedycache_optreq('security'), 'speedycache_nonce'))){
 		wp_send_json(array('success' => false, 'message' => 'Security check Failed'));
 	}
 }
@@ -130,8 +130,8 @@ function speedycache_delete_current_page_cache(){
 	}
 
 	if(!empty($_GET['path'])){
-		if($_GET['path'] == '/'){
-			$path = sanitize_text_field($_GET['path']).'index.html';
+		if(speedycache_optget('path') == '/'){
+			$path = sanitize_text_field(wp_unslash($_GET['path'])).'index.html';
 		}
 	}else{
 		$path = '/index.html';
@@ -544,7 +544,7 @@ function speedycache_update_image_list_ajax_request(){
 	$query_images_args['s'] = speedycache_optget('search');
 
 	if(!empty($_GET['filter'])){
-		if($_GET['filter'] == 'error_code'){
+		if(speedycache_optget('filter') == 'error_code'){
 			
 			$filter = array(
 				'key' => 'speedycache_optimisation',
@@ -622,7 +622,7 @@ function speedycache_column_clear_cache(){
 		wp_die('Must be admin');
 	}
 	
-	speedycache_single_delete_cache(false, esc_sql($_GET['id']));
+	speedycache_single_delete_cache(false, esc_sql((int)speedycache_optget('id')));
 	wp_send_json(array('success' => true));
 }
 
@@ -739,8 +739,8 @@ function speedycache_check_domain(){
 		wp_die('Must be admin');
 	}
 
-	$url = sanitize_url($_REQUEST['url']);
-	$settings = map_deep($_REQUEST['settings'], 'sanitize_text_field');
+	$url = !empty($_REQUEST['url']) ? sanitize_url(wp_unslash($_REQUEST['url'])) : '';
+	$settings = !empty($_REQUEST['settings']) ? speedycache_optreq('settings') : [];
 	
 	// We will always use Delay JS mode as All in the test
 	if(defined('SPEEDYCACHE_PRO') && !empty($settings['delay_js'])){
@@ -771,7 +771,7 @@ function speedycache_test_score(){
 		wp_die('Must be admin');
 	}
 
-	$url = sanitize_url($_GET['url']);
+	$url = (!empty($_GET['url']) ? sanitize_url(wp_unslash($_GET['url'])) : '');
 
 	$api_url = SPEEDYCACHE_API . 'pagespeed.php?url='. $url; 
 	
@@ -859,7 +859,7 @@ function speedycache_preloading_add_settings(){
 		wp_send_json_error('Unable to find the settings type');
 	}
 	
-	$type = sanitize_text_field($_REQUEST['type']);
+	$type = sanitize_text_field(wp_unslash($_REQUEST['type']));
 
 	if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
 		wp_send_json_error('Could not figure out type of the setting being saved!');
@@ -873,7 +873,7 @@ function speedycache_preloading_add_settings(){
 		$speedycache->options[$type] = [];
 	}
 
-	$settings = map_deep($_REQUEST['settings'], 'sanitize_text_field');
+	$settings = speedycache_optreq('settings');
 	$settings['resource'] = esc_url_raw($settings['resource']);
 
 	if(empty($settings['resource'])){
@@ -903,18 +903,18 @@ function speedycache_preloading_add_settings(){
 
 function speedycache_preloading_delete_resource(){
 	global $speedycache;
-	
+
 	if(!current_user_can('manage_options')){
 		wp_die('Must be admin');
 	}
-	
-	if($_REQUEST['key'] == NULL || empty($_REQUEST['type'])){
+
+	if(empty($_REQUEST['type']) || empty($_REQUEST['key']) || $_REQUEST['key'] == NULL){
 		wp_send_json_error('Key or Type is empty so can not delete this resource');
 	}
-	
-	$type = sanitize_text_field($_REQUEST['type']);
-	$key = sanitize_text_field($_REQUEST['key']);
-	
+
+	$type = !empty($_REQUEST['type']) ? sanitize_text_field(wp_unslash($_REQUEST['type'])) : '';
+	$key = !empty($_REQUEST['key']) ? sanitize_text_field(wp_unslash($_REQUEST['key'])) : '';
+
 	if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
 		wp_send_json_error('Could not figure out type of the resource being deleted!');
 	}

@@ -59,7 +59,7 @@ if(preg_match('/\/([^\/]+)\/([^\/]+(\.css|\.js))(\?.+)?$/', speedycache_current_
 
 	// Outputs the cached minified data
 	if(file_exists(speedycache_cache_path('assets/').$path[1])){
-		
+
 		if($sources = @scandir(speedycache_cache_path('assets/').$path[1], 1)){
 			if(isset($sources[0])){
 				if(preg_match('/\.css/', speedycache_current_url())){
@@ -73,7 +73,7 @@ if(preg_match('/\/([^\/]+)\/([^\/]+(\.css|\.js))(\?.+)?$/', speedycache_current_
 		}
 	}
 
-	//for non-exists files
+	// for non-exists files
 	if(preg_match("/\/speedycache.*\/assets\//i", speedycache_current_url())){
 		if(preg_match('/\.css/', speedycache_current_url())){
 			header('Content-type: text/css');
@@ -119,7 +119,7 @@ if(isset($_GET['action'])  && $_GET['action'] == 'speedycache'){
 		add_action('init',  '\SpeedyCache\Precache::create', 11);
 	}
 
-	if(isset($_GET['type']) && preg_match('/^clearcache(andminified|allsites)*$/i', $_GET['type'])){
+	if(isset($_GET['type']) && preg_match('/^clearcache(andminified|allsites)*$/i', speedycache_optget('type'))){
 		// /?action=speedycache&type=clearcache&token=123
 		// /?action=speedycache&type=clearcacheandminified&token=123
 
@@ -193,7 +193,7 @@ function speedycache_current_url(){
 	$url = home_url();
 	$url = parse_url($url);
 
-	$url = $url['host'] . speedycache_sanitize_url($_SERVER['REQUEST_URI']);
+	$url = $url['host'] . (!empty($_SERVER['REQUEST_URI']) ? sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])) : '');
 	return esc_url($url);
 }
 

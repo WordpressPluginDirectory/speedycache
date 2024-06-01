@@ -476,7 +476,7 @@ AddType image/webp .webp
 			return $force_to;
 		}
 		
-		$server_host = !empty($_SERVER['HTTP_HOST']) ? sanitize_text_field($_SERVER['HTTP_HOST']) : '';
+		$server_host = !empty($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
 
 		if(preg_match("/^https:\/\//", home_url())){
 			if(preg_match("/^https:\/\/www\./", home_url())){

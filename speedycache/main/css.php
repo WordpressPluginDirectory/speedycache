@@ -122,7 +122,7 @@ class CSS{
 	}
 
 	static function check_internal($link){
-		$http_host = str_replace('www.', '', sanitize_text_field($_SERVER['HTTP_HOST']));
+		$http_host = (!empty($_SERVER['HTTP_HOST']) ? str_replace('www.', '', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']))) : '');
 		
 		if(preg_match("/href=[\"\'](.*?)[\"\']/", $link, $href)){
 
@@ -520,7 +520,7 @@ class CSS{
 	}
 
 	static function is_internal_css($url){
-		$http_host = trim(sanitize_text_field($_SERVER['HTTP_HOST']), 'www.');
+		$http_host = (!empty($_SERVER['HTTP_HOST']) ? trim(sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])), 'www.') : '');
 
 		$url = trim($url);
 		$url = trim($url, "'");

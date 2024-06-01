@@ -190,7 +190,9 @@ class JS{
 
 	static function check_internal($link){
 		
-		$http_host = str_replace('www.', '', sanitize_text_field($_SERVER['HTTP_HOST']));
+		if(!empty($_SERVER['HTTP_HOST'])){
+			$http_host = str_replace('www.', '', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])));
+		}
 
 		if(!preg_match('/^<script[^\>]+\>/i', $link, $script) || !preg_match('/src=[\"\'](.*?)[\"\']/', $script[0], $src)){
 			return false;

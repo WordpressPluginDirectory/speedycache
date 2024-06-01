@@ -29,7 +29,7 @@ class CDN{
 			wp_send_json(array('success' => true));
 		}
 
-		$host = str_replace('www.', '', sanitize_text_field($_SERVER['HTTP_HOST']));
+		$host = (!empty($_SERVER['HTTP_HOST']) ? str_replace('www.', '', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']))) : '');
 		$url = esc_url($url);
 
 		if(!preg_match('/^http/', $url)){
@@ -393,7 +393,7 @@ class CDN{
 
 			if(preg_match('/^\/\/random/', $cdn['cdn_url']) || preg_match('/\/\/i\d\.wp\.com/', $cdn['cdn_url'])){
 				if(preg_match("/^\/\/random/", $cdn['cdn_url'])){
-					$cdn_url = '//i'.rand(0,3).'.wp.com/'.str_replace('www.', '', sanitize_text_field($_SERVER['HTTP_HOST']));
+					$cdn_url = '//i'.rand(0,3).'.wp.com/'.(!empty($_SERVER['HTTP_HOST']) ? str_replace('www.', '', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']))) : '');
 					$cdn_url = preg_replace('/\/\/i\d\.wp\.com/', '//i'.rand(0,3).'.wp.com', $cdn_url);
 				}else{
 					$cdn_url = $cdn['cdn_url'];
@@ -696,7 +696,7 @@ class CDN{
 		$res = wp_remote_request('https://api.cloudflare.com/client/v4/zones/' . $zoneid . '/settings/minify', $header);
 
 		if(empty($res) || is_wp_error($res)){
-			return array('success' => false, 'error_message' => __('Unable to disable minify options', 'speedycache'));
+			return array('success' => false, 'error_message' => esc_html__('Unable to disable minify options', 'speedycache'));
 		}
 		
 		$body = json_decode(wp_remote_retrieve_body($res));
@@ -709,7 +709,7 @@ class CDN{
 			return array('success' => false, 'error_message' => $body->errors[0]->message);
 		}
 		
-		return array('success' => false, 'error_message' => __('Unknown error', 'speedycache'));
+		return array('success' => false, 'error_message' => esc_html__('Unknown error', 'speedycache'));
 	}
 
 	static function cloudflare_zone_id($email = false, $key = false){
@@ -720,7 +720,7 @@ class CDN{
 			return $cache_zone_id;
 		}
 
-		$hostname = preg_replace("/^(https?\:\/\/)?(www\d*\.)?/", '', sanitize_text_field($_SERVER['HTTP_HOST']));
+		$hostname = (!empty($_SERVER['HTTP_HOST']) ? preg_replace("/^(https?\:\/\/)?(www\d*\.)?/", '', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']))) : '');
 
 		if(function_exists('idn_to_utf8')){
 			$hostname = idn_to_utf8($hostname);

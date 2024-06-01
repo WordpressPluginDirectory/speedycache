@@ -500,7 +500,7 @@ class Delete{
 			}
 		}
 
-		if(!file_exists($dir)){
+		if(!file_exists($dir) && !is_dir($dir)){
 			return true;
 		}
 

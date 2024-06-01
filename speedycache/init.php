@@ -8,7 +8,7 @@
 //ABSPATH is required.	
 if(!defined('ABSPATH')) exit;
 
-define('SPEEDYCACHE_VERSION', '1.1.6');
+define('SPEEDYCACHE_VERSION', '1.1.7');
 define('SPEEDYCACHE_DIR', dirname( __FILE__ ));
 define('SPEEDYCACHE_BASE', plugin_basename(SPEEDYCACHE_FILE));
 define('SPEEDYCACHE_URL', plugins_url('', __FILE__));
@@ -196,7 +196,7 @@ function speedycache_load_plugin(){
 		}
 
 		// Are we to show the SpeedyCache promo
-		if(!empty($promo_time) && $promo_time > 0 && $promo_time < (time() - (7 * 86400))){
+		if(!empty($promo_time) && $promo_time > 0 && $promo_time < (time() - (7 * 86400)) && !empty($_GET['page']) && strpos(speedycache_optget('page'), 'speedycache') !== FALSE){
 			add_action('admin_notices', 'speedycache_promo');
 		}
 		
@@ -323,7 +323,7 @@ function speedycache_get_content_url(){
 
 		if(!empty($_SERVER['HTTP_HOST']) && $url['host'] !== $_SERVER['HTTP_HOST']){
 			$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)) ? 'https://' : 'http://';
-			$content_url = $protocol . sanitize_text_field($_SERVER['HTTP_HOST']) . $url['path'];
+			$content_url = $protocol . sanitize_url(wp_unslash($_SERVER['HTTP_HOST'])) . $url['path'];
 		}
 	}
 

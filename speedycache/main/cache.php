@@ -74,7 +74,7 @@ class Cache{
 			}
 		}
 
-		if(!empty($action) && !empty($_SERVER['REQUEST_URI']) && strlen($_SERVER['REQUEST_URI']) > 1){ 
+		if(!empty($action) && !empty($_SERVER['REQUEST_URI']) && strlen(speedycache_optserver('REQUEST_URI')) > 1){ 
 			$speedycache->settings['cache_file_path'] = preg_replace("/\/*\?.+/", '', $speedycache->settings['cache_file_path']);
 			$speedycache->settings['cache_file_path'] = $speedycache->settings['cache_file_path'].'/';
 
@@ -118,7 +118,7 @@ class Cache{
 		global $speedycache;
 		
 		if(empty($uri)){
-			$uri = speedycache_sanitize_url($_SERVER['REQUEST_URI']);
+			$uri = !empty($_SERVER['REQUEST_URI']) ? speedycache_sanitize_url($_SERVER['REQUEST_URI']) : '';
 		}
 		
 		$type = 'all';
@@ -131,7 +131,7 @@ class Cache{
 
 		if(speedycache_is_plugin_active('gtranslate/gtranslate.php')){
 			if(isset($_SERVER['HTTP_X_GT_LANG'])){
-				$speedycache->settings['cache_file_path'] = speedycache_cache_path($type.'/').$_SERVER['HTTP_X_GT_LANG']. $uri;
+				$speedycache->settings['cache_file_path'] = speedycache_cache_path($type.'/').speedycache_optserver('HTTP_X_GT_LANG'). $uri;
 			}else if(isset($uri) && $uri !== '/index.php'){
 				$speedycache->settings['cache_file_path'] = speedycache_cache_path($type).$uri;
 			}else if(isset($uri)){
@@ -289,12 +289,12 @@ class Cache{
 		global $speedycache;
 
 		// Exclude static pdf files
-		if(preg_match('/\.pdf$/i', speedycache_sanitize_url($_SERVER['REQUEST_URI']))){
+		if(!empty($_SERVER['REQUEST_URI']) && preg_match('/\.pdf$/i', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 			return false;
 		}
 
 		// Logged-in user ?
-		if(!empty($speedycache->options['logged_in_user']) && $speedycache->options['logged_in_user'] == 'on'){
+		if(!empty($speedycache->options['logged_in_user'])){
 			foreach((array)$_COOKIE as $cookie_key => $cookie_value){
 				if(preg_match('/wordpress_logged_in/i', $cookie_key)){
 					ob_start('\SpeedyCache\Cache::cdn_rewrite');
@@ -330,8 +330,8 @@ class Cache{
 			return false;
 		}
 
-		if(!isset($_GET['test_speedycache']) && preg_match('/\?/', $_SERVER['REQUEST_URI']) && !preg_match('/\/\?fdx\_switcher\=true/', $_SERVER['REQUEST_URI'])){ // for WP Mobile Edition
-			if(preg_match('/\?amp(\=1)?/i', $_SERVER['REQUEST_URI'])){
+		if(!isset($_GET['test_speedycache']) && isset($_SERVER['REQUEST_URI']) && preg_match('/\?/', sanitize_url(wp_unslash($_SERVER['REQUEST_URI']))) && !preg_match('/\/\?fdx\_switcher\=true/', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){ // for WP Mobile Edition
+			if(isset($_SERVER['REQUEST_URI']) && preg_match('/\?amp(\=1)?/i', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 				//
 			}else if(defined('SPEEDYCACHE_CACHE_QUERYSTRING') && SPEEDYCACHE_CACHE_QUERYSTRING){
 				//
@@ -344,16 +344,16 @@ class Cache{
 			}
 		}
 		
-		if(!empty($_SERVER['HTTP_USER_AGENT']) && preg_match('/('.speedycache_get_excluded_useragent().')/', $_SERVER['HTTP_USER_AGENT'])){
+		if(!empty($_SERVER['HTTP_USER_AGENT']) && preg_match('/('.speedycache_get_excluded_useragent().')/', sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])))){
 			return false;
 		}
 
-		if(isset($_SERVER['REQUEST_URI']) && preg_match('/(\/){2}$/', speedycache_sanitize_url($_SERVER['REQUEST_URI']))){
+		if(isset($_SERVER['REQUEST_URI']) && !empty($_SERVER['REQUEST_URI']) && preg_match('/(\/){2}$/', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 			return false;
 		}
 
 		// to check permalink if it does not end with slash
-		if(isset($_SERVER['REQUEST_URI']) && preg_match('/[^\/]+\/$/', speedycache_sanitize_url($_SERVER['REQUEST_URI'])) && !preg_match('/\/$/', get_option('permalink_structure'))){
+		if(isset($_SERVER['REQUEST_URI']) && !empty($_SERVER['REQUEST_URI']) && preg_match('/[^\/]+\/$/', sanitize_url(wp_unslash($_SERVER['REQUEST_URI']))) && !preg_match('/\/$/', get_option('permalink_structure'))){
 			return false;
 		}
 
@@ -377,7 +377,7 @@ class Cache{
 			return false;
 		}
 
-		if(isset($_SERVER['DOCUMENT_ROOT']) && preg_match('/bitnami/', $_SERVER['DOCUMENT_ROOT'])){
+		if(isset($_SERVER['DOCUMENT_ROOT']) && preg_match('/bitnami/', sanitize_text_field(wp_unslash($_SERVER['DOCUMENT_ROOT'])))){
 			// to disable cache for the IP based urls on the bitnami servers
 			// /opt/bitnami/apps/wordpress/htdocs
 			if(preg_match('/(?:[0-9]{1,3}\.){3}[0-9]{1,3}/', get_option('home'))){
@@ -385,11 +385,11 @@ class Cache{
 			}
 		}
 
-		if(preg_match('/www\./i', get_option('home')) && !preg_match('/www\./i', sanitize_text_field($_SERVER['HTTP_HOST']))){
+		if(isset($_SERVER['HTTP_HOST']) && preg_match('/www\./i', get_option('home')) && !preg_match('/www\./i', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])))){
 			return false;
 		}
 
-		if(!preg_match('/www\./i', get_option('home')) && preg_match('/www\./i', sanitize_text_field($_SERVER['HTTP_HOST']))){
+		if(!preg_match('/www\./i', get_option('home')) && !empty($_SERVER['HTTP_HOST']) && preg_match('/www\./i', sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])))){
 			return false;
 		}
 
@@ -526,7 +526,7 @@ class Cache{
 			array_push($list, '\/cart', '\/checkout');
 		}
 
-		if(preg_match('/'.implode('|', $list).'/i', speedycache_sanitize_url($_SERVER['REQUEST_URI']))){
+		if(!empty($_SERVER['REQUEST_URI']) && preg_match('/'.implode('|', $list).'/i', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 			return true;
 		}
 
@@ -537,7 +537,7 @@ class Cache{
 		global $speedycache;
 		
 		$preg_match_rule = '';
-		$request_url = !empty($_SERVER['REQUEST_URI']) ? speedycache_sanitize_url(urldecode(trim($_SERVER['REQUEST_URI'], '/'))) : '';
+		$request_url = (!empty($_SERVER['REQUEST_URI']) ? urldecode(trim(sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])), '/')) : '');
 
 		if(empty($speedycache->settings['exclude_rules'])){
 			return false;
@@ -818,7 +818,7 @@ class Cache{
 			}
 			
 			// to disable for Ajax Load More on the pages
-			if(speedycache_is_plugin_active('ajax-load-more/ajax-load-more.php') && preg_match("/\/page\/\d+\//", speedycache_sanitize_url($_SERVER['REQUEST_URI']))){
+			if(speedycache_is_plugin_active('ajax-load-more/ajax-load-more.php') && !empty($_SERVER['REQUEST_URI']) && preg_match("/\/page\/\d+\//", sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 				$execute_lazy_load = false;
 			}
 
@@ -880,7 +880,7 @@ class Cache{
 			do_action('speedycache_is_cacheable_action');
 		}else if($speedycache->settings['cur_content_type'] == 'xml'){
 			if(preg_match('/<link><\/link>/', $buffer)){
-				if(preg_match('/\/feed$/', speedycache_sanitize_url($_SERVER['REQUEST_URI']))){
+				if(!empty($_SERVER['REQUEST_URI']) && preg_match('/\/feed$/', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 					return $buffer.time();
 				}
 			}
@@ -1176,7 +1176,7 @@ class Cache{
 		global $redux_builder_amp;
 		
 		$action = false;
-		$request_uri = speedycache_sanitize_url(trim($_SERVER['REQUEST_URI'], '/'));
+		$request_uri = (!empty($_SERVER['REQUEST_URI']) ? trim(sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])), '/') : '');
 
 		if(preg_match('/^amp/', $request_uri)){
 			$action = true;
@@ -1269,7 +1269,7 @@ class Cache{
 	}
 
 	static function detect_current_page_type(){
-		if(!empty($_SERVER['REQUEST_URI']) && preg_match('/^\/wp-json|\?/', speedycache_sanitize_url($_SERVER['REQUEST_URI']))){
+		if(!empty($_SERVER['REQUEST_URI']) && preg_match('/^\/wp-json|\?/', sanitize_url(wp_unslash($_SERVER['REQUEST_URI'])))){
 			return true;
 		}
 

@@ -72,7 +72,7 @@ function speedycache_check_auto_cache($post_id, $post){
 		return;
 	}
 	
-	if(!wp_verify_nonce($_REQUEST['speedycache_metabox_save_nonce'], 'speedycache_metabox_save')){
+	if(!wp_verify_nonce(speedycache_optreq('speedycache_metabox_save_nonce'), 'speedycache_metabox_save')){
 		die('Security Check Failed');
 	}
 

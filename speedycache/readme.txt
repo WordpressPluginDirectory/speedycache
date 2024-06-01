@@ -4,7 +4,7 @@ Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy l
 Requires at least: 4.7
 Tested up to: 6.5
 Requires PHP: 7.3
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -148,6 +148,10 @@ You can either go to the Delete Cache Tab where you will find Stats about the Ca
 4. SpeedyCache Exclude page
 
 == Changelog ==
+
+= 1.1.7 (31st May 2024) =
+* [Bug-Fix] There was an issue with Delay JS which has been fixed.
+* [Bug-Fix] Deletion of cache was creating warnings which has been fixed.
 
 = 1.1.6 (20th April 2024) =
 * [Task] Changed the license to GNU GPLv3.

@@ -67,7 +67,7 @@ class TPP{
 	static function postratings_clear_cache($rate_userid, $post_id){
 		// to remove cache if vote is from homepage or category page or tag
 		if(!empty($_SERVER['HTTP_REFERER'])){
-			$url =  parse_url(esc_url(wp_unslash($_SERVER['HTTP_REFERER'])));
+			$url = parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])));
 
 			$url['path'] = isset($url['path']) ? $url['path'] : '/index.html';
 

@@ -372,7 +372,7 @@ function speedycache_save_settings(){
 	
 	// Critcial Image Count
 	if( isset($_POST['submit']) || isset($_POST['speedycache_critical_image_count']) ){
-		$speedycache->options['critical_image_count'] = empty($_POST['speedycache_critical_image_count']) ? 1 : sanitize_text_field($_POST['speedycache_critical_image_count']);
+		$speedycache->options['critical_image_count'] = empty($_POST['speedycache_critical_image_count']) ? 1 : sanitize_text_field(wp_unslash($_POST['speedycache_critical_image_count']));
 	}
 	
 	// Preload Critical Images
@@ -479,9 +479,9 @@ function speedycache_obj_settings(){
 				<div><strong>Memory Usage:</strong> <span><?php esc_html_e($memory); ?></span></div>
 			</div>
 			<div class="speedycache-drop-in"><strong>Drop In:</strong> <?php echo defined('SPEEDYCACHE_OBJECT_CACHE') ? '<span style="color:green;">Valid</span>' : '<span style="color:red;">Not Valid</span>';?></div>
-			<div style="margin-top:7px;"><strong>phpRedis Status:</strong> <?php echo empty(phpversion('redis')) ? '<span style="color:red">' . __('phpRedis Not Found', 'speedycache') : (version_compare(phpversion('redis'), '3.1.1') > 0 ? '<span style="color:green">'. __('Available', 'speedycache') . '('.phpversion('redis').')' : '<span style="color:red">' . __('You are using older version of PHPRedis')); ?></span></div>
+			<div style="margin-top:7px;"><strong>phpRedis Status:</strong> <?php echo empty(phpversion('redis')) ? '<span style="color:red">' . esc_html__('phpRedis Not Found', 'speedycache') : (version_compare(phpversion('redis'), '3.1.1') > 0 ? '<span style="color:green">'. esc_html__('Available', 'speedycache') . '('.esc_html(phpversion('redis')).')' : '<span style="color:red">' . esc_html__('You are using older version of PHPRedis')); ?></span></div>
 			
-			<button class="button button-primary speedycache-flush-db">Flush DB<div class="speedycache-btn-loader"><img src="<?php echo site_url() . '/wp-admin/images/loading.gif';?>"/></div></button>
+			<button class="button button-primary speedycache-flush-db">Flush DB<div class="speedycache-btn-loader"><img src="<?php echo esc_url(site_url() . '/wp-admin/images/loading.gif');?>"/></div></button>
 		</div>
 		<div class="speedycache-object-charts"></div>
 	</div>
@@ -744,7 +744,7 @@ function speedycache_obj_settings(){
 							}
 
 							foreach($speedycache->object['non_cache_group'] as $group){
-								echo $group . "\n";
+								echo esc_html($group) . "\n";
 							}
 						?></textarea>
 					</label>
@@ -779,31 +779,31 @@ function speedycache_obj_save(){
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['driver'])){ 
-		$speedycache->object['driver'] = empty($_POST['driver']) ? 'Redis' : sanitize_text_field($_POST['host']);
+		$speedycache->object['driver'] = empty($_POST['driver']) ? 'Redis' : sanitize_text_field(wp_unslash($_POST['driver']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['host'])){ 
-		$speedycache->object['host'] = empty($_POST['host']) ? 'localhost' : sanitize_text_field($_POST['host']);
+		$speedycache->object['host'] = empty($_POST['host']) ? 'localhost' : sanitize_text_field(wp_unslash($_POST['host']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['port'])){ 
-		$speedycache->object['port'] = $_POST['port'] === FALSE ? 6379 : (int)sanitize_text_field($_POST['port']);
+		$speedycache->object['port'] = $_POST['port'] === FALSE ? 6379 : (int)sanitize_text_field(wp_unslash($_POST['port']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['ttl'])){ 
-		$speedycache->object['ttl'] = empty($_POST['ttl']) ? 360 : (int)sanitize_text_field($_POST['ttl']);
+		$speedycache->object['ttl'] = empty($_POST['ttl']) ? 360 : (int)sanitize_text_field(wp_unslash($_POST['ttl']));
 	}
 
 	if(isset($_POST['submit']) || isset($_POST['username'])){ 
-		$speedycache->object['username'] = empty($_POST['username']) ? '' : sanitize_text_field($_POST['username']);
+		$speedycache->object['username'] = empty($_POST['username']) ? '' : sanitize_text_field(wp_unslash($_POST['username']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['password'])){ 
-		$speedycache->object['password'] = empty($_POST['password']) ? '' : sanitize_text_field($_POST['password']);
+		$speedycache->object['password'] = empty($_POST['password']) ? '' : sanitize_text_field(wp_unslash($_POST['password']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['db-id'])){ 
-		$speedycache->object['db-id'] = empty($_POST['db-id']) ? 0 : (int)sanitize_text_field($_POST['db-id']);
+		$speedycache->object['db-id'] = empty($_POST['db-id']) ? 0 : (int)sanitize_text_field(wp_unslash($_POST['db-id']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['admin'])){ 
@@ -819,11 +819,11 @@ function speedycache_obj_save(){
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['serialization'])){ 
-		$speedycache->object['serialization'] = empty($_POST['serialization']) ? '' : sanitize_text_field($_POST['serialization']);
+		$speedycache->object['serialization'] = empty($_POST['serialization']) ? '' : sanitize_text_field(wp_unslash($_POST['serialization']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['compress'])){ 
-		$speedycache->object['compress'] = empty($_POST['compress']) ? '' : sanitize_text_field($_POST['compress']);
+		$speedycache->object['compress'] = empty($_POST['compress']) ? '' : sanitize_text_field(wp_unslash($_POST['compress']));
 	}
 	
 	if(isset($_POST['submit']) || isset($_POST['non_cache_group'])){
@@ -831,7 +831,7 @@ function speedycache_obj_save(){
 		$non_cache_group = [];
 		
 		if(!empty($_POST['non_cache_group'])){
-			$non_cache_group = sanitize_text_field($_POST['non_cache_group']);
+			$non_cache_group = sanitize_textarea_field(wp_unslash($_POST['non_cache_group']));
 			$non_cache_group = explode(' ', $non_cache_group);
 			
 			foreach($non_cache_group as $key => $group){
@@ -863,7 +863,7 @@ function speedycache_obj_save(){
 	}
 	\SpeedyCache\ObjectCache::flush_db();
 	\SpeedyCache\ObjectCache::$instance = null;
-	speedycache_notify(array(__('Object Cache Settings have been saved', 'speedycache'), 'success'));
+	speedycache_notify(array(esc_html__('Object Cache Settings have been saved', 'speedycache'), 'success'));
 }
 
 // Save Settings of Bloat
@@ -917,12 +917,12 @@ function speedycache_save_bloat(){
 	
 	// Heartbeat settings for Frontend
 	if(isset($_POST['submit']) || isset($_POST['speedycache_heartbeat_frequency'])){
-		$speedycache->bloat['heartbeat_frequency'] = empty($_POST['speedycache_heartbeat_frequency']) ? '' : sanitize_text_field($_POST['speedycache_heartbeat_frequency']);
+		$speedycache->bloat['heartbeat_frequency'] = empty($_POST['speedycache_heartbeat_frequency']) ? '' : sanitize_text_field(wp_unslash($_POST['speedycache_heartbeat_frequency']));
 	}
 	
 	// Heartbeat settings for Backend
 	if(isset($_POST['submit']) || isset($_POST['speedycache_disable_heartbeat'])){
-		$speedycache->bloat['disable_heartbeat'] = empty($_POST['speedycache_disable_heartbeat']) ? '' : sanitize_text_field($_POST['speedycache_disable_heartbeat']);
+		$speedycache->bloat['disable_heartbeat'] = empty($_POST['speedycache_disable_heartbeat']) ? '' : sanitize_text_field(wp_unslash($_POST['speedycache_disable_heartbeat']));
 	}
 	
 	// Limit Post Revesions
@@ -942,12 +942,12 @@ function speedycache_save_bloat(){
 	
 	// Set Post revesion count
 	if(isset($_POST['submit']) || isset($_POST['speedycache_post_revision_count'])){
-		$speedycache->bloat['post_revision_count'] = empty($_POST['speedycache_post_revision_count']) ? '' : sanitize_text_field($_POST['speedycache_post_revision_count']);
+		$speedycache->bloat['post_revision_count'] = empty($_POST['speedycache_post_revision_count']) ? '' : sanitize_text_field(wp_unslash($_POST['speedycache_post_revision_count']));
 	}
 	
 	update_option('speedycache_bloat', $speedycache->bloat);
 	
-	speedycache_notify(array(__('Bloat settings have been saved successfully.', 'speedycache'), 'success'));
+	speedycache_notify(array(esc_html__('Bloat settings have been saved successfully.', 'speedycache'), 'success'));
 	
 }
 
@@ -1058,7 +1058,7 @@ function speedycache_settings_page(){
 								</label>
 								<div class="speedycache-option-info">
 									<span class="speedycache-option-name"><?php esc_html_e('Enable Cache', 'speedycache'); ?> <span class="speedycache-modal-settings-link" setting-id="speedycache_status" style="display:<?php echo (!empty($speedycache->options['status']) ? 'inline-block' : 'none');?>;">- <?php esc_html_e('Settings', 'speedycache'); ?></span></span>
-									<span class="speedycache-option-desc"><?php esc_html_e('Enables caching', 'speedycache'); ?> | <a href="<?php echo admin_url('admin.php?page=speedycache-test'); ?>" style="color:#3d5afe">Test Before Enabling</a></span> 
+									<span class="speedycache-option-desc"><?php esc_html_e('Enables caching', 'speedycache'); ?> | <a href="<?php echo esc_url(admin_url('admin.php?page=speedycache-test')); ?>" style="color:#3d5afe">Test Before Enabling</a></span> 
 								</div>
 							</div>
 							
@@ -1160,14 +1160,14 @@ function speedycache_settings_page(){
 										<div class="speedycache-sortable">
 											<?php 
 												$preload_types = array(
-													'homepage' => __('Homepage', 'speedycache'),
-													'post' => __('Posts', 'speedycache'),
-													'category' => __('Categories', 'speedycache'),
-													'page' => __('Pages', 'speedycache'),
-													'tag' => __('Tags', 'speedycache'),
-													'attachment' => __('Attachments', 'speedycache'),
-													'custom_post_types' => __('Custom Post Types', 'speedycache'),
-													'custom_taxonomies' => __('Custom Taxonomies', 'speedycache')
+													'homepage' => esc_html__('Homepage', 'speedycache'),
+													'post' => esc_html__('Posts', 'speedycache'),
+													'category' => esc_html__('Categories', 'speedycache'),
+													'page' => esc_html__('Pages', 'speedycache'),
+													'tag' => esc_html__('Tags', 'speedycache'),
+													'attachment' => esc_html__('Attachments', 'speedycache'),
+													'custom_post_types' => esc_html__('Custom Post Types', 'speedycache'),
+													'custom_taxonomies' => esc_html__('Custom Taxonomies', 'speedycache')
 												);
 
 												if(!empty($speedycache->options['preload_order'])){
@@ -1602,20 +1602,27 @@ function speedycache_settings_page(){
 								</label>
 								<div class="speedycache-option-info">
 									<?php
-									echo '<span class="speedycache-option-name">'.__('Critical CSS', 'speedycache');
+									echo '<span class="speedycache-option-name">'.esc_html__('Critical CSS', 'speedycache');
 									
 									if(!empty($speedycache->options['critical_css'])){
 										echo ' - 
-									<span class="speedycache-action-link" action-name="speedycache_critical_css">'.__('Create Now', 'speedycache').'</span>
+									<span class="speedycache-action-link" action-name="speedycache_critical_css">'.esc_html__('Create Now', 'speedycache').'</span>
 									&nbsp;&nbsp;|&nbsp;&nbsp;
-									<span class="speedycache-modal-settings-link" setting-id="speedycache_critical_css">'.__('Logs', 'speedycache').'</span>';
+									<span class="speedycache-modal-settings-link" setting-id="speedycache_critical_css">'.esc_html__('Logs', 'speedycache').'</span>';
 									}
-									echo '</span><span class="speedycache-option-desc">'.__('It extracts the necessary CSS of the viewport on load to improve load speed.', 'speedycache').'</span>';
+									echo '</span><span class="speedycache-option-desc">'.esc_html__('It extracts the necessary CSS of the viewport on load to improve load speed.', 'speedycache').'</span>';
 									?>
 								</div>
 							</div>
 							
-							<?php echo \SpeedyCache\CriticalCss::status_modal(); ?>
+							<?php echo wp_kses(\SpeedyCache\CriticalCss::status_modal(), array_merge(wp_kses_allowed_html('post'), [
+								'div' => [
+									'modal-id' => true,
+									'class' => true,
+									'title' => true,
+									'style' => true,
+								]
+							])); ?>
 							
 						<?php 
 						} else { 
@@ -1650,9 +1657,9 @@ function speedycache_settings_page(){
 								</label>
 								<div class="speedycache-option-info">
 									<?php
-									echo '<span class="speedycache-option-name"><span>'.__('Delay JS', 'speedycache').'</span><a href="https://speedycache.com/docs/file-optimization/how-to-delay-js-until-user-interaction/" target="_blank"><span class="dashicons dashicons-info" style="font-size:14px"></span></a>
+									echo '<span class="speedycache-option-name"><span>'.esc_html__('Delay JS', 'speedycache').'</span><a href="https://speedycache.com/docs/file-optimization/how-to-delay-js-until-user-interaction/" target="_blank"><span class="dashicons dashicons-info" style="font-size:14px"></span></a>
 									<span class="speedycache-modal-settings-link" setting-id="speedycache_delay_js" style="display:'.(!empty($speedycache->options['delay_js']) ? 'inline-block' : 'none').';">- Settings</span>
-									</span><span class="speedycache-option-desc">'.__('Delays JS until user interaction(like scroll, click etc) to improve performance', 'speedycache').'</span>';
+									</span><span class="speedycache-option-desc">'.esc_html__('Delays JS until user interaction(like scroll, click etc) to improve performance', 'speedycache').'</span>';
 									?>
 								</div>
 							</div>
@@ -1671,8 +1678,8 @@ function speedycache_settings_page(){
 										<input type="radio" id="speedycache_delayjs_all" name="speedycache_delay_js_mode" value="all" <?php echo !empty($speedycache->options['delay_js_mode']) && $speedycache->options['delay_js_mode'] == 'all' ? 'checked' : ''; ?>/>
 										
 										<div class="speedycache-radio-input">
-											<label for="speedycache_delayjs_selected"><?php _e('Delay Selected', 'speedycache'); ?></label>
-											<label for="speedycache_delayjs_all"><?php _e('Delay All', 'speedycache'); ?></label>
+											<label for="speedycache_delayjs_selected"><?php esc_html_e('Delay Selected', 'speedycache'); ?></label>
+											<label for="speedycache_delayjs_all"><?php esc_html_e('Delay All', 'speedycache'); ?></label>
 										</div>
 										<div class="speedycache-delay_js_list">
 											<label for="speedycache_delay_js_excludes" style="width:100%;">
@@ -1710,8 +1717,8 @@ function speedycache_settings_page(){
 								</label>
 								<div class="speedycache-option-info">
 									<?php
-									echo '<span class="speedycache-option-name">'.__('Delay JS', 'speedycache').'</span>';
-									echo '</span><span class="speedycache-option-desc">'.__('Delays JS until user interaction(like scroll, click etc) to improve performance', 'speedycache').'</span>';
+									echo '<span class="speedycache-option-name">'.esc_html__('Delay JS', 'speedycache').'</span>';
+									echo '</span><span class="speedycache-option-desc">'.esc_html__('Delays JS until user interaction(like scroll, click etc) to improve performance', 'speedycache').'</span>';
 									?>
 								</div>
 								<div class="speedycache-premium-tag">
@@ -1729,9 +1736,9 @@ function speedycache_settings_page(){
 									</label>
 									<div class="speedycache-option-info">
 										<?php
-										echo '<span class="speedycache-option-name"><span>'.__('Unused CSS', 'speedycache').'</span><a href="https://speedycache.com/docs/file-optimization/how-to-remove-unused-css/" target="_blank"><span class="dashicons dashicons-info" style="font-size:14px"></span></a>
+										echo '<span class="speedycache-option-name"><span>'.esc_html__('Unused CSS', 'speedycache').'</span><a href="https://speedycache.com/docs/file-optimization/how-to-remove-unused-css/" target="_blank"><span class="dashicons dashicons-info" style="font-size:14px"></span></a>
 										<span class="speedycache-modal-settings-link" setting-id="speedycache_unused_css" style="display:'.(!empty($speedycache->options['unused_css']) ? 'inline-block' : 'none').';">- Settings</span>
-										</span><span class="speedycache-option-desc">'.__('It removes the unused CSS.', 'speedycache').'</span>';
+										</span><span class="speedycache-option-desc">'.esc_html__('It removes the unused CSS.', 'speedycache').'</span>';
 										?>
 									</div>
 								</div>
@@ -1748,8 +1755,8 @@ function speedycache_settings_page(){
 											<p><?php esc_html_e('Extracts the CSS being used on the page.', 'speedycache'); ?></p>
 											<div>
 												<label>
-													<span style="font-weight:500; margin:20px 0 3px 0; display:block;"><?php _e('Load Unused CSS', 'speedycache'); ?></span>
-													<span class="speedycache-model-label-description" style="margin-bottom:5px;"><?php _e('Select the way you want the Unused CSS to load.', 'speedycache'); ?></span>
+													<span style="font-weight:500; margin:20px 0 3px 0; display:block;"><?php esc_html_e('Load Unused CSS', 'speedycache'); ?></span>
+													<span class="speedycache-model-label-description" style="margin-bottom:5px;"><?php esc_html_e('Select the way you want the Unused CSS to load.', 'speedycache'); ?></span>
 												</label>
 												<input type="radio" id="speedycache_unusedcss_async" name="speedycache_unusedcss_load" value="async" <?php echo (empty($speedycache->options['unusedcss_load']) || (!empty($speedycache->options['unusedcss_load']) && $speedycache->options['unusedcss_load'] == 'async')) ? 'checked' : ''; ?>/>
 												<input type="radio" id="speedycache_unusedcss_interaction" name="speedycache_unusedcss_load" value="interaction" <?php echo !empty($speedycache->options['unusedcss_load']) && $speedycache->options['unusedcss_load'] == 'interaction' ? 'checked' : ''; ?>/>
@@ -1808,9 +1815,9 @@ function speedycache_settings_page(){
 								</label>
 								<div class="speedycache-option-info">
 									<?php
-									echo '<span class="speedycache-option-name"><span>'.__('Lazy Render HTML Element', 'speedycache').'</span><a href="https://speedycache.com/docs/file-optimization/how-to-lazy-render-html-elements/" target="_blank"><span class="dashicons dashicons-info" style="font-size:14px"></span></a>
+									echo '<span class="speedycache-option-name"><span>'.esc_html__('Lazy Render HTML Element', 'speedycache').'</span><a href="https://speedycache.com/docs/file-optimization/how-to-lazy-render-html-elements/" target="_blank"><span class="dashicons dashicons-info" style="font-size:14px"></span></a>
 									<span class="speedycache-modal-settings-link" setting-id="speedycache_lazy_load_html" style="display:'.(!empty($speedycache->options['lazy_load_html']) ? 'inline-block' : 'none').';">- Settings</span>
-									</span><span class="speedycache-option-desc">'.__('Lazy Render a HTML element(class or id) if not in view-port.', 'speedycache').'</span>';
+									</span><span class="speedycache-option-desc">'.esc_html__('Lazy Render a HTML element(class or id) if not in view-port.', 'speedycache').'</span>';
 									?>
 								</div>
 							</div>
@@ -1848,8 +1855,8 @@ function speedycache_settings_page(){
 								</label>
 								<div class="speedycache-option-info">
 									<?php
-									echo '<span class="speedycache-option-name">'.__('Lazy Render HTML Element', 'speedycache').'</span>';
-									echo '</span><span class="speedycache-option-desc">'.__('Lazy Render a HTML element(class or id) if not in view-port.', 'speedycache').'</span>';
+									echo '<span class="speedycache-option-name">'.esc_html__('Lazy Render HTML Element', 'speedycache').'</span>';
+									echo '</span><span class="speedycache-option-desc">'.esc_html__('Lazy Render a HTML element(class or id) if not in view-port.', 'speedycache').'</span>';
 									?>
 								</div>
 								<div class="speedycache-premium-tag">
@@ -2237,7 +2244,7 @@ function speedycache_settings_page(){
 												</p>
 												<div class="speedycache-form-input">
 													<select name="speedycache_lazy_load_placeholder" class="speedycache_lazy_load_placeholder speedycache-full-width" value="<?php echo !isset($speedycache->options['lazy_load_placeholder']) ? '' : esc_attr($speedycache->options['lazy_load_placeholder']); ?>">
-														<option value="default" <?php echo (isset($speedycache->options['lazy_load_placeholder']) && $speedycache->options['lazy_load_placeholder'] == 'default') ? 'selected' : '';?>><?php echo preg_replace("/https?\:\/\//", '', esc_url(SPEEDYCACHE_URL)).'/assets/images/image-palceholder.png'; ?></option>
+														<option value="default" <?php echo (isset($speedycache->options['lazy_load_placeholder']) && $speedycache->options['lazy_load_placeholder'] == 'default') ? 'selected' : '';?>><?php echo esc_html(preg_replace("/https?\:\/\//", '', esc_url(SPEEDYCACHE_URL))).'/assets/images/image-palceholder.png'; ?></option>
 														<option value="base64" <?php echo (isset($speedycache->options['lazy_load_placeholder']) && $speedycache->options['lazy_load_placeholder'] == 'base64') ? 'selected' : '';?>>data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7</option>
 														<option value="custom" <?php echo (isset($speedycache->options['lazy_load_placeholder']) && $speedycache->options['lazy_load_placeholder'] == 'custom') ? 'selected' : '';?>><?php esc_html_e('Custom Placeholder', 'speedycache'); ?></option>
 													</select>
@@ -2450,9 +2457,16 @@ function speedycache_settings_page(){
 							</div>
 							<div class="speedycache-modal-content speedycache-info-modal">
 								<form class="speedycache-pseudo-form" data-type="preload_resource_list">'.
-								speedycache_preload_modal_options('preload_resource', ['type' => true, 'crossorigin' => true]).'
+								wp_kses(speedycache_preload_modal_options('preload_resource', ['type' => true, 'crossorigin' => true]), [
+									'input' => ['type' => true, 'value' => true, 'style' => true, 'name' => true, 'placeholder' => true],
+									'option' => ['value' => true],
+									'select' => ['name' => true, 'required' => true],
+									'label' => ['for' => true],
+									'div' => ['class' => true],
+									'span' => true,
+									]).'
 								<div style="display:flex; justify-content:center;">
-									<button type="submit" align="center" class="speedycache_preloading_add">Add<div class="speedycache-btn-loader"><img src="'.site_url(). '/wp-admin/images/loading.gif"/></div></button>
+									<button type="submit" align="center" class="speedycache_preloading_add">Add<div class="speedycache-btn-loader"><img src="'.esc_url(site_url()). '/wp-admin/images/loading.gif"/></div></button>
 								</div>
 								</form>';
 								
@@ -2499,9 +2513,16 @@ function speedycache_settings_page(){
 							</div>
 							<div class="speedycache-modal-content speedycache-info-modal">
 								<form class="speedycache-pseudo-form" data-type="pre_connect_list">								
-								'.speedycache_preload_modal_options('pre_connect', ['crossorigin' => true]).'
+								'.wp_kses(speedycache_preload_modal_options('pre_connect', ['crossorigin' => true]), [
+									'input' => ['type' => true, 'value' => true, 'style' => true, 'name' => true, 'placeholder' => true],
+									'option' => ['value' => true],
+									'select' => ['name' => true, 'required' => true],
+									'label' => ['for' => true],
+									'div' => ['class' => true],
+									'span' => true,
+									]).'
 								<div style="display:flex; justify-content:center;">
-									<button tabindex="" type="submit" align="center" class="speedycache_preloading_add">Add<div class="speedycache-btn-loader"><img src="'.site_url(). '/wp-admin/images/loading.gif"/></div></button>
+									<button tabindex="" type="submit" align="center" class="speedycache_preloading_add">Add<div class="speedycache-btn-loader"><img src="'.esc_url(site_url()). '/wp-admin/images/loading.gif"/></div></button>
 								</div>
 								</form>';
 								if(!empty($speedycache->options['pre_connect_list']) && count($speedycache->options['pre_connect_list']) > 6){
@@ -2958,7 +2979,7 @@ function speedycache_settings_page(){
 				
 				<?php
 				if(!empty($cloudflare_integration_exist)){
-					echo '<div class="speedycache-notice speedycache-notice-blue"><span class="dashicons dashicons-info-outline"></span> '.__('You are using Cloudflare so you should enable Cloudflare Integration. Please take a look at the following documentation', 'speedycache').' <a href="https://speedycache.com/docs/cdn/how-to-setup-cloudflare/" target="_blank"><strong>Check How to intergate CloudFlare</strong></a></div>';
+					echo '<div class="speedycache-notice speedycache-notice-blue"><span class="dashicons dashicons-info-outline"></span> '.esc_html__('You are using Cloudflare so you should enable Cloudflare Integration. Please take a look at the following documentation', 'speedycache').' <a href="https://speedycache.com/docs/cdn/how-to-setup-cloudflare/" target="_blank"><strong>Check How to intergate CloudFlare</strong></a></div>';
 				} ?>
 				<div class="speedycache-block">
 					<div class="speedycache-block-title">
@@ -3027,7 +3048,7 @@ function speedycache_settings_page(){
 								<form>
 									<input type="hidden" name="id" value="cloudflare"/>
 									<h3><?php esc_html_e('CloudFlare Settings', 'speedycache'); ?></h3>
-									<?php echo speedycache_cdn_actions_tmpl('cloudflare'); ?>
+									<?php echo wp_kses_post(speedycache_cdn_actions_tmpl('cloudflare')); ?>
 									<hr/>
 									<div class="speedycache-block">
 										<h4><?php esc_html_e('Enter API Keys', 'speedycache'); ?></h4>	
@@ -3082,7 +3103,7 @@ function speedycache_settings_page(){
 									
 										$action_btns = speedycache_cdn_actions_tmpl('bunny');
 										if(!empty($action_btns)){
-											echo $action_btns;
+											echo wp_kses_post($action_btns);
 										}
 									?>
 									<hr/>
@@ -3145,7 +3166,7 @@ function speedycache_settings_page(){
 								<form>
 									<input type="hidden" name="id" value="other"/>
 									<h3><?php esc_html_e('Other CDN Settings', 'speedycache'); ?></h3>
-									<?php echo speedycache_cdn_actions_tmpl('other'); 
+									<?php echo wp_kses_post(speedycache_cdn_actions_tmpl('other')); 
 										
 									?>
 									<hr/>
@@ -3188,7 +3209,7 @@ function speedycache_settings_page(){
 								<form>
 									<input type="hidden" name="id" value="stackpath"/>
 									<h3><?php esc_html_e('StackPath Settings', 'speedycache'); ?></h3>
-									<?php echo speedycache_cdn_actions_tmpl('stackpath'); ?>
+									<?php echo wp_kses_post(speedycache_cdn_actions_tmpl('stackpath')); ?>
 									<hr/>
 									<div class="speedycache-block">
 										<h4><?php esc_html_e('Enter CDN Url', 'speedycache'); ?></h4>
@@ -3460,7 +3481,7 @@ function speedycache_settings_page(){
 										echo '<span class="speedycache-modal-settings-link" setting-id="'.esc_attr($bloat_option['settings']).'" style="display:'. (!empty($speedycache->bloat[$bloat_key]) ? 'inline-block' : 'none').';">- '.esc_html__('Settings', 'speedycache').'</span>';
 										}
 										echo '</span>
-										<span class="speedycache-option-desc">'. $bloat_option['description'].'</span> 
+										<span class="speedycache-option-desc">'. esc_html($bloat_option['description']).'</span> 
 									</div>
 								</div>';
 								}
@@ -3481,7 +3502,7 @@ function speedycache_settings_page(){
 									</label>
 									<div class="speedycache-option-info">
 										<span class="speedycache-option-name">'.esc_html($bloat_option['title']). '</span>
-										<span class="speedycache-option-desc">'. $bloat_option['description'].'</span> 
+										<span class="speedycache-option-desc">'. esc_html($bloat_option['description']).'</span> 
 									</div>
 								</div>';
 								}
@@ -3774,7 +3795,7 @@ function speedycache_exclude_source(){
 function speedycache_cdn_actions_tmpl($cdn){
 	$cdn_values = get_option('speedycache_cdn');
 	$action_html = '';
-	
+
 	if(empty($cdn) || empty($cdn_values)){
 		return $action_html;
 	}
@@ -3876,8 +3897,8 @@ function speedycache_promotion_tmpl(){
 				echo '</div>
 			</div>
 			<div class="speedycache-promotion-content speedycache-doc-block">
-				<h2 style="color:white; margin:0 0 5px 0; padding:0;">'.__('Documentation', 'speedycache').'</h2>
-				<p>'.__('If you face any issue or need help with the settings check our docs', 'speedycache').'</p>
+				<h2 style="color:white; margin:0 0 5px 0; padding:0;">'.esc_html__('Documentation', 'speedycache').'</h2>
+				<p>'.esc_html__('If you face any issue or need help with the settings check our docs', 'speedycache').'</p>
 				<a style="color:white; margin:0 0 5px 0; padding:0;" href="https://speedycache.com/docs/" target="_blank">Read Docs</a>
 			</div>
 		</div>';
@@ -4053,29 +4074,29 @@ function speedycache_test_page(){
 	
 	// Settings
 	if(defined('SPEEDYCACHE_PRO')){
-		$settings['minify_html'] = ['text' => __('Minify HTML', 'speedycache')];
-		$settings['minify_js'] = ['text' => __('Minify JS', 'speedycache')];
-		$settings['minify_css_enhanced'] = ['text' => __('Advanced Minify CSS', 'speedycache')];
-		$settings['critical_css'] = ['text' => __('Critical CSS', 'speedycache')];
-		$settings['lazy_load'] = ['text' => __('Lazy Load', 'speedycache')];
-		$settings['instant_page'] = ['text' => __('Instant Page', 'speedycache')];
+		$settings['minify_html'] = ['text' => esc_html__('Minify HTML', 'speedycache')];
+		$settings['minify_js'] = ['text' => esc_html__('Minify JS', 'speedycache')];
+		$settings['minify_css_enhanced'] = ['text' => esc_html__('Advanced Minify CSS', 'speedycache')];
+		$settings['critical_css'] = ['text' => esc_html__('Critical CSS', 'speedycache')];
+		$settings['lazy_load'] = ['text' => esc_html__('Lazy Load', 'speedycache')];
+		$settings['instant_page'] = ['text' => esc_html__('Instant Page', 'speedycache')];
 		//$settings['local_gfonts'] = true;
-		$settings['render_blocking'] = ['text' => __('Render-blocking JS', 'speedycache')];
-		$settings['mobile_theme'] = ['text' => __('Mobile Theme', 'speedycache')];
-		$settings['mobile'] = ['text' => __('Mobile', 'speedycache')];
-		$settings['google_fonts'] = ['text' => __('Async Google Fonts', 'speedycache')];
-		$settings['display_swap'] = ['text' => __('Font Display Swap', 'speedycache')];
-		$settings['delay_js'] = ['text' => __('Delay JS', 'speedycache')];
-		$settings['image_dimensions'] = ['text' => __('Image Dimensions', 'speedycache')];
+		$settings['render_blocking'] = ['text' => esc_html__('Render-blocking JS', 'speedycache')];
+		$settings['mobile_theme'] = ['text' => esc_html__('Mobile Theme', 'speedycache')];
+		$settings['mobile'] = ['text' => esc_html__('Mobile', 'speedycache')];
+		$settings['google_fonts'] = ['text' => esc_html__('Async Google Fonts', 'speedycache')];
+		$settings['display_swap'] = ['text' => esc_html__('Font Display Swap', 'speedycache')];
+		$settings['delay_js'] = ['text' => esc_html__('Delay JS', 'speedycache')];
+		$settings['image_dimensions'] = ['text' => esc_html__('Image Dimensions', 'speedycache')];
 	}
 
-	$settings['gzip'] = ['text' => __('GZIP Compression', 'speedycache'), 'enabled' => true];
-	$settings['minify_css'] = ['text' => __('Minify CSS', 'speedycache'), 'enabled' => true];
-	$settings['combine_css'] = ['text' => __('Combine CSS', 'speedycache'), 'enabled' => true];
+	$settings['gzip'] = ['text' => esc_html__('GZIP Compression', 'speedycache'), 'enabled' => true];
+	$settings['minify_css'] = ['text' => esc_html__('Minify CSS', 'speedycache'), 'enabled' => true];
+	$settings['combine_css'] = ['text' => esc_html__('Combine CSS', 'speedycache'), 'enabled' => true];
 
 	echo '<div class="speedycache-test-page">
 	<div class="speedycache-test-container">
-	<div style="display:flex; gap:10px;"><input type="text" placeholder="https://example.com" name="site_url" value="'.site_url().'"/><button class="speedycache-btn speedycache-btn-primary" id="speedycache-test-btn">Analyse Performance</button>
+	<div style="display:flex; gap:10px;"><input type="text" placeholder="https://example.com" name="site_url" value="'.esc_url(site_url()).'"/><button class="speedycache-btn speedycache-btn-primary" id="speedycache-test-btn">Analyse Performance</button>
 	</div>
 
 	<div class="speedycache-test-result-wrap">
@@ -4114,7 +4135,7 @@ function speedycache_test_page(){
 		</div>
 		<div class="speedycache-score-comparison" style="width:55%; padding: 0 0 0 30px;">';
 			if(empty($old_speed)){
-				echo '<p class="speedycache-no-tests">'.__('No Analysis has been done yet', 'speedycache'). '</p>';
+				echo '<p class="speedycache-no-tests">'.esc_html__('No Analysis has been done yet', 'speedycache'). '</p>';
 			}
 			echo '<h3>Performance Scores</h3>
 			<div class="speedycache-test-chart-wrap">
@@ -4146,7 +4167,7 @@ function speedycache_test_page(){
 			<div class="speedycache-test-action">Want to enable the SpeedyCache settings used for this test? <button class="speedycache-btn speedycache-btn-primary speedycache-copy-test-settings">Enable Now</button></div>
 			<div class="speedycache-test-result-meta-info">
 				<p>Your website is <span class="speedycache-test-improvement">'.(!empty($improvement) ? esc_attr($improvement) : 0).'%</span> Better with SpeedyCache Optimization</p>
-				<p><b>Website: </b>'.site_url().'</p>
+				<p><b>Website: </b>'.esc_url(site_url()).'</p>
 				<p><b>Tested with: </b> Google PageSpeed Insights</p>
 				<p><b>Note: </b> This is performance improvement data for mobile device</p>
 				
