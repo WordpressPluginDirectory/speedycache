@@ -100,16 +100,16 @@ class CDN{
 
 	static function options(){
 		global $speedycache;
-		
+
 		if(!current_user_can('manage_options')){
 			wp_die('Must be admin');
 		}
-		
+
 		// Output
 		if(!empty($speedycache->settings['cdn'])){
 			wp_send_json($speedycache->settings['cdn']);
 		}
-		
+
 		wp_send_json(array('success' => false));
 	}
 
@@ -786,7 +786,7 @@ class CDN{
 		}
 
 		foreach($cdn as $cdn_key => $cdn_value){
-			if($cdn_value['id'] === 'cloudflare'){
+			if($cdn_value['id'] === 'cloudflare' && !empty($cdn_value['zone_id'])){
 				return unserialize($cdn_value['zone_id']);
 			}
 		}

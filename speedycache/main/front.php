@@ -153,8 +153,6 @@ if(isset($_GET['action'])  && $_GET['action'] == 'speedycache'){
 
 		die('Done');
 	}
-	
-	die();
 }
 
 function speedycache_mts_init(){

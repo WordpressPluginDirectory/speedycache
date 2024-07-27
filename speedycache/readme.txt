@@ -2,9 +2,9 @@
 Contributors: softaculous
 Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy loading, mobile cache, minify css, combine css, minify js, combine js, gzip, browser caching, render blocking js, preload, widget cache, softaculous, speedycache, performance
 Requires at least: 4.7
-Tested up to: 6.5
+Tested up to: 6.6
 Requires PHP: 7.3
-Stable tag: 1.1.7
+Stable tag: 1.1.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -149,6 +149,15 @@ You can either go to the Delete Cache Tab where you will find Stats about the Ca
 
 == Changelog ==
 
+= 1.1.9 (26th July 2024) =
+* [Security-Fix] A Security issue reported by Rafie Muhammad (Patchstack) has been fixed.
+
+= 1.1.8 (16th July 2024) =
+* [Task] Removed StackPath from CDN(as StackPath CDN was retired in September 2023)
+* [Task] Tested with WordPress 6.6
+* [Bug-Fix] There was an issue with deletion of Preloading setting that has been fixed.
+* [Bug-Fix] There was an issue with enabling Precaching using URL which has been fixed.
+
 = 1.1.7 (31st May 2024) =
 * [Bug-Fix] There was an issue with Delay JS which has been fixed.
 * [Bug-Fix] Deletion of cache was creating warnings which has been fixed.
@@ -180,7 +189,7 @@ You can either go to the Delete Cache Tab where you will find Stats about the Ca
 * [Bug-Fix] Dynamic Property warnings have been fixed for PHP 8.2.
 
 = 1.1.1 (19th October 2023) =
-* [Structural Change] SpeedyCache Pro will now require the free version to be installed fore it to to work.
+* [Structural Change] SpeedyCache Pro will now require the free version to be installed for it to to work.
 * [Feature] Text Rendering: It tells the browser to prioritize rendering speed over legibility and geometric precision.
 * [Feature] DNS-Prefetch: It is a technique that tells the browser to resolve domain names in advance, which can speed up website loading.
 * [Pro-Feature] Preconnect: It is a technique that tells the browser to establish connections to external resources in advance, which can speed up website loading.

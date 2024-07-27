@@ -908,12 +908,12 @@ function speedycache_preloading_delete_resource(){
 		wp_die('Must be admin');
 	}
 
-	if(empty($_REQUEST['type']) || empty($_REQUEST['key']) || $_REQUEST['key'] == NULL){
+	if(!isset($_REQUEST['type']) || !isset($_REQUEST['key']) || $_REQUEST['key'] == NULL){
 		wp_send_json_error('Key or Type is empty so can not delete this resource');
 	}
 
-	$type = !empty($_REQUEST['type']) ? sanitize_text_field(wp_unslash($_REQUEST['type'])) : '';
-	$key = !empty($_REQUEST['key']) ? sanitize_text_field(wp_unslash($_REQUEST['key'])) : '';
+	$type = isset($_REQUEST['type']) ? sanitize_text_field(wp_unslash($_REQUEST['type'])) : '';
+	$key = isset($_REQUEST['key']) ? sanitize_text_field(wp_unslash($_REQUEST['key'])) : '';
 
 	if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
 		wp_send_json_error('Could not figure out type of the resource being deleted!');
