@@ -4,7 +4,7 @@ Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy l
 Requires at least: 4.7
 Tested up to: 6.6
 Requires PHP: 7.3
-Stable tag: 1.1.9
+Stable tag: 1.2.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -130,7 +130,7 @@ Data cleanup cleans the database by removing the following data:-
 6. Expired Transient Options
 
 == Credits ==
-Forked from WP Fastest Cache [https://wordpress.org/plugins/wp-fastest-cache/](https://wordpress.org/plugins/wp-fastest-cache/)
+SpeedyCache version 1.1.9 and below was a forked software from WP Fastest Cache [https://wordpress.org/plugins/wp-fastest-cache/](https://wordpress.org/plugins/wp-fastest-cache/). SpeedyCache 1.2.0 is a new software written from scratch.
 
 == Frequently Asked Questions ==
 
@@ -140,6 +140,9 @@ Go To your WordPress install -> Plugins -> Add New Button -> In Search Box, Look
 = How will I know if my website got cached =
 You can either go to the Delete Cache Tab where you will find Stats about the Cache or you can just visit your website in incognito mode and Inspect the HTML and at the last, you will find a comment saying that page got cached with time.
 
+= How can I report security bugs? =
+You can report security bugs through the Patchstack Vulnerability Disclosure Program. The Patchstack team help validate, triage and handle any security vulnerabilities. [Report a security vulnerability.](https://patchstack.com/database/vdp/speedycache)
+
 == Screenshots ==
 
 1. SpeedyCache Settings page
@@ -148,6 +151,13 @@ You can either go to the Delete Cache Tab where you will find Stats about the Ca
 4. SpeedyCache Exclude page
 
 == Changelog ==
+
+= 1.2.0 (23nd August 2024) =
+* [Improvement] The UI has been improved, by reducing some unnecessary options or making them default.
+* [Improvement] CSS Minification has been improved.
+* [Improvement] We now use Advanced cache, for better cache load performace.
+* [Improvement] Cache Preloads have been improved, with less options to configure.
+* This verison has some breaking changes. 
 
 = 1.1.9 (26th July 2024) =
 * [Security-Fix] A Security issue reported by Rafie Muhammad (Patchstack) has been fixed.

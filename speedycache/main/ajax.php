@@ -1,932 +1,624 @@
 <?php
-/*
-* SPEEDYCACHE
-* https://speedycache.com/
-* (c) SpeedyCache Team
-*/
+
+namespace SpeedyCache;
 
 if(!defined('ABSPATH')){
 	die('HACKING ATTEMPT!');
 }
 
-if(!isset($_REQUEST['security']) || strpos(speedycache_optreq('action'), 'speedycache_') !== 0){
-	return;
-}
+use \SpeedyCache\Util;
 
-// This is called FIRST by WP when AJAX is loaded. We will verify in this and if the nonce fails, this will die !
-add_action('admin_init', 'speedycache_ajax_verify');
-
-// AJAX Call Actions
-add_action('wp_ajax_speedycache_delete_cache', 'speedycache_delete_cache_toolbar');
-add_action('wp_ajax_speedycache_delete_cache_and_minified', 'speedycache_delete_css_and_js_cache_toolbar');
-add_action('wp_ajax_speedycache_delete_current_page_cache', 'speedycache_delete_current_page_cache'); // Not
-add_action('wp_ajax_speedycache_clear_cache_of_allsites', 'speedycache_clear_cache_of_allsites_callback'); // fn being called somewhere else too
-
-// Toolbar AJAX actions
-add_action('wp_ajax_speedycache_toolbar_save_settings', 'speedycache_toolbar_save_settings_callback');
-add_action('wp_ajax_speedycache_toolbar_get_settings', 'speedycache_toolbar_get_settings_callback');
-
-add_action('wp_ajax_speedycache_save_timeout_pages', 'speedycache_save_timeout_pages_callback');
-add_action('wp_ajax_speedycache_save_exclude_pages', 'speedycache_save_exclude_pages_callback');
-
-// CDN AJAX Actions
-add_action('wp_ajax_speedycache_check_url', '\SpeedyCache\CDN::check_url');
-add_action('wp_ajax_speedycache_cdn_options', '\SpeedyCache\CDN::options');
-add_action('wp_ajax_speedycache_remove_cdn_integration', '\SpeedyCache\CDN::remove');
-add_action('wp_ajax_speedycache_pause_cdn_integration', '\SpeedyCache\CDN::pause');
-add_action('wp_ajax_speedycache_start_cdn_integration', '\SpeedyCache\CDN::start');
-add_action('wp_ajax_speedycache_save_cdn_integration','\SpeedyCache\CDN::save');
-
-// DB AJAX Actions
-add_action('wp_ajax_speedycache_db_statics', 'speedycache_db_statics_callback');
-add_action('wp_ajax_speedycache_db_fix', 'speedycache_db_fix_callback');
-
-// Misc
-add_action('wp_ajax_speedycache_cache_statics_get', 'speedycache_cache_statics_get_callback');
-add_action('wp_ajax_get_server_time_ajax_request', 'speedycache_get_server_time_ajax_request');
-add_action('wp_ajax_save_varniship', 'speedycache_save_varniship');
-add_action('wp_ajax_speedycache_hide_promo', 'speedycache_hide_promo');
-add_action('wp_ajax_speedycache_hide_nag', 'speedycache_hide_nag');
-
-// Image AJAX call actions
-if(defined('SPEEDYCACHE_PRO') && file_exists(SPEEDYCACHE_PRO_DIR . '/main/image.php')){
-	add_action('wp_ajax_speedycache_revert_image_ajax_request', 'speedycache_img_revert_image_ajax_request');
-	add_action('wp_ajax_speedycache_statics_ajax_request', 'speedycache_img_statics_ajax_request');
-	add_action('wp_ajax_speedycache_optimize_image_ajax_request', 'speedycache_img_optimize_image_ajax_request');
-	add_action('wp_ajax_speedycache_update_image_list_ajax_request', 'speedycache_update_image_list_ajax_request');
-	add_action('wp_ajax_speedycache_update_image_settings', 'speedycache_img_update_settings');
-	add_action('wp_ajax_speedycache_img_revert_all', 'speedycache_img_revert_all_ajax');
-}
-
-if(defined('SPEEDYCACHE_PRO')){
-	add_action('wp_ajax_speedycache_critical_css', 'speedycache_critical_css');
-	add_action('wp_ajax_speedycache_generate_single_ccss', 'speedycache_generate_single_ccss');
-	add_action('wp_ajax_speedycache_flush_objects', 'speedycache_flush_objects');
+class Ajax{
 	
-	// Preloading Actions
-	add_action('wp_ajax_speedycache_preloading_add_settings', 'speedycache_preloading_add_settings');
-	add_action('wp_ajax_speedycache_preloading_delete_resource', 'speedycache_preloading_delete_resource');
-}
-
-// PageSpeed Test Actions
-add_action('wp_ajax_speedycache_check_domain', 'speedycache_check_domain');
-add_action('wp_ajax_speedycache_test_score', 'speedycache_test_score');
-add_action('wp_ajax_speedycache_create_test_cache', 'speedycache_create_test_cache');
-add_action('wp_ajax_speedycache_copy_test_settings', 'speedycache_copy_test_settings');
-
-// Clear Cache Column
-add_action('wp_ajax_speedycache_clear_cache_column',  'speedycache_column_clear_cache');
-
-/****************************************************
-*					Functions
-*****************************************************/
-
-function speedycache_ajax_verify(){
-	
-	$promo_nonce = ['speedycache_hide_nag', 'speedycache_hide_promo'];
-	
-	if(in_array(speedycache_optreq('action'), $promo_nonce)){
-		if(empty(wp_verify_nonce(speedycache_optreq('security'), 'speedycache_promo_nonce'))){
-			wp_send_json(array('success' => false, 'message' => 'Security check Failed'));
-		}
-
-		return;
-	}
-	
-	if(empty(wp_verify_nonce(speedycache_optreq('security'), 'speedycache_nonce'))){
-		wp_send_json(array('success' => false, 'message' => 'Security check Failed'));
-	}
-}
-
-function speedycache_delete_cache_toolbar(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-
-	speedycache_delete_cache();
-}
-
-function speedycache_delete_css_and_js_cache_toolbar(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	speedycache_delete_cache(true);
-}
-
-function speedycache_delete_current_page_cache(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	\SpeedyCache\CDN::purge();
-	$path = '';
-
-	if(!isset($_GET['path'])){
-		wp_send_json(array('Path has NOT been defined', 'error', 'alert'));
-	}
-
-	if(!empty($_GET['path'])){
-		if(speedycache_optget('path') == '/'){
-			$path = sanitize_text_field(wp_unslash($_GET['path'])).'index.html';
-		}
-	}else{
-		$path = '/index.html';
-	}
-
-	$path = urldecode($path);
-
-	// for security
-	if(preg_match('/\.{2,}/', $path)){
-		die('May be Directory Traversal Attack');
-	}
-
-	$paths = array();
-
-	array_push($paths, speedycache_cache_path('all') . $path);
-
-	if(defined('SPEEDYCACHE_PRO_DIR') && file_exists(SPEEDYCACHE_PRO_DIR . '/main/mobile.php')){
-		\SpeedyCache\Mobile::cache();
-		array_push($paths, speedycache_cache_path('mobile-cache'). $path);
-	}
-
-	foreach($paths as $key => $value){
-		if(file_exists($value)){
-			if(preg_match("/\/(all|mobile-cache)\/index\.html$/i", $value)){
-				@unlink($value);
-			}else{
-				\SpeedyCache\Delete::rm_dir($value);
-			}
-		}
-	}
-
-	\SpeedyCache\Delete::multiple_domain_mapping_cache();
-
-	wp_send_json(array('The cache of page has been cleared','success'));
-}
-
-
-function speedycache_clear_cache_of_allsites_callback(){
-
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-
-	\SpeedyCache\CDN::purge();
-
-	$path = speedycache_cache_path('*');
-
-	$files = glob(speedycache_cache_path('*'));
-
-	if(!is_dir(speedycache_cache_path('tmp_cache'))){
-		if(@mkdir(speedycache_cache_path('tmp_cache'), 0755, true)){
-			//tmp_cache has been created
-		}
-	}
-
-	foreach((array)$files as $file){
-		@rename($file, speedycache_cache_path('tmp_cache/').basename($file).'-'.time());
-	}
-
-	if(is_admin() && defined('DOING_AJAX') && DOING_AJAX){
-		wp_send_json(array('message' => 'The cache of page has been cleared', 'success' => 'true'));
-	}
-}
-
-function speedycache_toolbar_save_settings_callback(){
-	//Security check
-	speedycache_verify_nonce(speedycache_optget('security'), 'speedycache_nonce');
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$roles = speedycache_optget('roles');
-	
-	if(empty($roles) || !is_array($roles)){
-		delete_option('speedycache_toolbar_settings');
+	static function hooks(){
+		add_action('wp_ajax_speedycache_delete_page_cache', '\SpeedyCache\Ajax::delete_page_cache');
+		add_action('wp_ajax_speedycache_save_cache_settings', '\SpeedyCache\Ajax::save_cache_settings');
+		add_action('wp_ajax_speedycache_save_file_settings', '\SpeedyCache\Ajax::save_file_settings');
+		add_action('wp_ajax_speedycache_save_preload_settings', '\SpeedyCache\Ajax::save_preload_settings');
+		add_action('wp_ajax_speedycache_save_media_settings', '\SpeedyCache\Ajax::save_media_settings');
+		add_action('wp_ajax_speedycache_save_cdn_settings', '\SpeedyCache\Ajax::save_cdn_settings');
+		add_action('wp_ajax_speedycache_test_pagespeed', '\SpeedyCache\Ajax::test_pagespeed');
+		add_action('wp_ajax_speedycache_save_excludes', '\SpeedyCache\Ajax::save_excludes');
+		add_action('wp_ajax_speedycache_delete_exclude_rule', '\SpeedyCache\Ajax::delete_exclude_rule');
 		
-		wp_send_json(array('success' => true));
-	}
+		if(defined('SPEEDYCACHE_PRO')){
+			add_action('wp_ajax_speedycache_optm_db', '\SpeedyCache\Ajax::optm_db');
+			add_action('wp_ajax_speedycache_flush_objects', '\SpeedyCache\Ajax::flush_objs');
+			add_action('wp_ajax_speedycache_save_object_settings', '\SpeedyCache\Ajax::save_object_settings');
+			add_action('wp_ajax_speedycache_save_bloat_settings', '\SpeedyCache\Ajax::save_bloat_settings');
+			add_action('wp_ajax_speedycache_preloading_add_settings', '\SpeedyCache\Ajax::add_preload_settings');
+			add_action('wp_ajax_speedycache_preloading_delete_resource', '\SpeedyCache\Ajax::delete_preload_resource');
 
-	$roles_arr = array();
-
-	foreach($roles as $key => $value){
-		$value = esc_html(esc_sql($value));
-		$key = esc_html(esc_sql($key));
-
-		$roles_arr[$key] = $value;
-	}
-
-	if(get_option('speedycache_toolbar_settings') === false){
-		update_option('speedycache_toolbar_settings', $roles_arr, 1, 'no');
-	}else{
-		update_option('speedycache_toolbar_settings', $roles_arr);
-	}
-
-	wp_send_json(array('success' => true));
-}
-
-
-function speedycache_toolbar_get_settings_callback(){
-	//Security Check
-	speedycache_verify_nonce(speedycache_optget('security'), 'speedycache_nonce');
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$result = array('success' => true, 'roles' => false);
-
-	$speedycache_role_status = get_option('speedycache_toolbar_settings');
-	if(is_array($speedycache_role_status) && !empty($speedycache_role_status)){
-		$result['roles'] = $speedycache_role_status;
-	}
-
-	wp_send_json($result);
-}
-
-
-function speedycache_save_timeout_pages_callback(){
-	speedycache_verify_nonce(speedycache_optpost('security'), 'speedycache_nonce');
-
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	speedycache_set_custom_interval();
-
-	$crons = get_option('cron');
-
-	foreach($crons as $cron_key => $cron_value){
-		foreach( (array) $cron_value as $hook => $events){
-
-			if(preg_match('/^speedycache(.*)/', $hook, $id)){
-
-				if(isset($id[1]) || preg_match('/^\_(\d+)$/', $id[1])){
-					
-					foreach((array) $events as $event_key => $event){
-						if(isset($id[1])){
-							wp_clear_scheduled_hook('speedycache'.$id[1], $event['args']);
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	$rules = speedycache_optpost('rules');
-	
-	if(!empty($rules) && count($rules) > 0){
-		$i = 0;
-
-		foreach($rules as $key => $value){
-			if(preg_match('/^(daily|onceaday)$/i', $value['schedule']) && isset($value['hour']) && isset($value['minute']) && strlen($value['hour']) > 0 && strlen($value['minute']) > 0){
-				$args = array('prefix' => $value['prefix'], 'content' => $value['content'], 'hour' => $value['hour'], 'minute' => $value['minute']);
-
-				$timestamp = mktime($value['hour'], $value['minute'], 0, date('m'), date('d'), date('Y'));
-
-				$timestamp = $timestamp > time() ? $timestamp : $timestamp + 60*60*24;
-			}else{
-				$args = array('prefix' => $value['prefix'], 'content' => $value['content']);
-				$timestamp = time();
-			}
-
-			wp_schedule_event($timestamp, $value['schedule'], 'speedycache_'.$i, array($args));
-			$i = $i + 1;
+			// Critical CSS
+			add_action('wp_ajax_speedycache_critical_css', '\SpeedyCache\Ajax::generate_critical_css');
 		}
 	}
 
-	wp_send_json(array('success' => true));
-}
+	static function delete_page_cache(){
+		check_ajax_referer('speedycache_ajax_nonce');
 
-
-function speedycache_save_exclude_pages_callback(){
-	speedycache_verify_nonce(speedycache_optpost('security'), 'speedycache_nonce');
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$rules = speedycache_optpost('rules');
-	
-	if(!empty($rules)){
+		$page_id = Util::sanitize_get('page_id');
 		
-		foreach($rules as $key => &$value){
-			$value['prefix'] = strip_tags($value['prefix']);
-			$value['content'] = strip_tags($value['content']);
-
-			$value['prefix'] = preg_replace("/\'|\"/", '', $value['prefix']);
-			$value['content'] = preg_replace("/\'|\"/", '', $value['content']);
-
-			$value['content'] = trim($value['content'], '/');
-
-			$value['content'] = preg_replace("/(\#|\s|\(|\)|\*)/", '', $value['content']);
-
-			if($value['prefix'] == 'homepage'){
-				speedycache_delete_home_page_cache(false);
-			}
+		if(empty($page_id)){
+			wp_send_json_error(__('Can not delete cache of this page as the page ID is empty', 'speedycache'));
 		}
 
-		if(get_option('speedycache_exclude')){
-			update_option('speedycache_exclude', $rules);
-		}else{
-			update_option('speedycache_exclude', $rules, null, 'yes');
-		}
-	}else{
-		delete_option('speedycache_exclude');
 	}
 
-	\SpeedyCache\htaccess::add_exclude();
-
-	wp_send_json(array('success' => true));
-}
-
-function speedycache_cache_statics_get_callback(){
-	speedycache_verify_nonce(speedycache_optget('security'), 'speedycache_nonce');
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	if(defined('SPEEDYCACHE_PRO') && file_exists(SPEEDYCACHE_PRO_DIR.'/main/statistics.php')){
-		\SpeedyCache\Statistics::init();
-		$res = \SpeedyCache\Statistics::get();
-		wp_send_json($res);
-	}
-}
-
-function speedycache_db_statics_callback(){
-	global $wpdb;
-	
-	if(!wp_verify_nonce(speedycache_optpost('security'), 'speedycache_nonce')){
-		wp_send_json(array('success' => false, 'message' => 'Security check'));
-	}
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$statics = array('all_warnings' => 0, 'post_revisions' => 0, 'trashed_contents' => 0, 'trashed_spam_comments' => 0, 'trackback_pingback' => 0, 'transient_options' => 0, 'expired_transient' => 0);
-
-	
-	$statics['post_revisions'] = $wpdb->get_var("SELECT COUNT(*) FROM `$wpdb->posts` WHERE post_type = 'revision';");
-
-	$statics['trashed_contents'] = $wpdb->get_var("SELECT COUNT(*) FROM `$wpdb->posts` WHERE post_status = 'trash';");
-
-	$statics['trashed_spam_comments'] = $wpdb->get_var("SELECT COUNT(*) FROM `$wpdb->comments` WHERE comment_approved = 'spam' OR comment_approved = 'trash' ;");
-
-	$statics['trackback_pingback'] = $wpdb->get_var("SELECT COUNT(*) FROM `$wpdb->comments` WHERE comment_type = 'trackback' OR comment_type = 'pingback' ;");
-
-	$element = "SELECT COUNT(*) FROM `$wpdb->options` WHERE option_name LIKE '%\_transient\_%' ;";
-	$statics['transient_options'] = $wpdb->get_var( $element ) > 20 ? $wpdb->get_var( $element ) : 0;	
-
-	$statics['expired_transient'] = $wpdb->get_var( "SELECT COUNT(*) FROM `$wpdb->options` WHERE option_name LIKE '_transient_timeout%' AND option_value < " . time() );
-
-	$statics['all_warnings'] = $statics['all_warnings'] + $statics['transient_options'] + $statics['trackback_pingback']+ $statics['trashed_spam_comments']+ $statics['trashed_contents']+ $statics['post_revisions'];
-	
-	wp_send_json($statics);
-}
-
-function speedycache_db_fix_callback(){
-	if(!defined('SPEEDYCACHE_PRO')){
-		return;
-	}
-	
-	if(!wp_verify_nonce(speedycache_optget('security'), 'speedycache_nonce')){
-		wp_send_json(array('success' => false, 'message' => 'Security check'));
-	}
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	\SpeedyCache\DB::clean(speedycache_optget('type'));
-}
-
-function speedycache_get_server_time_ajax_request(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$servers = speedycache_optget('servers');
-	
-	foreach((array)$servers as $key => $value){
-		$servers[$key]['time'] = speedycache_get_server_time($value['url']);
-
-		if($servers[$key]['time']['time'] === 0){
-			unset($servers[$key]);
-		}
-	}
-
-	wp_send_json($servers);
-}
-
-function speedycache_get_server_time($url){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$result = array('success' => true,
-					'time' => 0);
-
-	if(function_exists('fsockopen')){
-		$port = preg_match('/^https/', $url) ? 443 : 80;
-
-		$url = preg_replace("/https?\:\/\//", '', $url);
-
-		$start_time = microtime(true);
-
-		$file      = @fsockopen($url, 443, $errno, $errstr, 1);
-		$stoptime  = microtime(true);
-		$status    = 0;
-
-		//echo $stoptime."\n\n";
-
-		if(!$file){
-			$status = 1000;  // Site is down
-		}else{
-			fclose($file);
-			$status = ($stoptime - $start_time);
-		}
-
-		$result['time'] = round($status, 3);
-
-	}else if(function_exists('curl_init')){
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-
-		if(curl_exec($ch)){
-			$info = curl_getinfo($ch);
-		}
-
-		curl_close($ch);
-
-		if(isset($info['http_code']) && ($info['http_code'] == 200)){
-			$result['time'] = round($info['total_time'], 3);
-		}else{
-			$result['time'] = 1000;
-		}
-	}else{
-		$result['time'] = 0;
-		$result['success'] = false;
-	}
-
-	return $result;
-}
-
-/****************************************************
-*					Image Functions
-*****************************************************/
-
-function speedycache_img_revert_all_ajax(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	\SpeedyCache\Image::revert_all();
-}
-
-function speedycache_img_update_settings(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-
-	$settings = speedycache_optpost('settings');
-	
-	foreach($settings as $key => $setting){		
-		$new_key = str_replace('img_', '', $key);
+	static function save_cache_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
 		
-		$settings[$new_key] = $setting;
-		unset($settings[$key]);
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+
+		$options = get_option('speedycache_options');
+
+		$options['status'] = isset($_POST['status']);
+		$options['preload'] = isset($_POST['preload']);
+		$options['preload_interval'] = (int) Util::sanitize_post('preload_interval', 0);
+		$options['logged_in_user'] = isset($_POST['logged_in_user']);
+		$options['mobile'] = isset($_POST['mobile']);
+		$options['mobile_theme'] = isset($_POST['mobile_theme']);
+		$options['lbc'] = isset($_POST['lbc']);
+		$options['gzip'] = isset($_POST['gzip']);
+		$options['purge_varnish'] = isset($_POST['purge_varnish']);
+		$options['varniship'] = !empty($_POST['varniship']) ? Util::sanitize_post('varniship') : '';
+		$options['purge_interval'] = (int) Util::sanitize_post('purge_interval', 0);
+		$options['purge_interval_unit'] = Util::sanitize_post('purge_interval_unit', 'days');
+
+		wp_clear_scheduled_hook('speedycache_purge_cache');
+		wp_clear_scheduled_hook('speedycache_preload');
+
+		$speedycache->options = $options;
+		update_option('speedycache_options', $options);
+
+		\SpeedyCache\Htaccess::init();
+		\SpeedyCache\Install::set_advanced_cache();
+		Util::set_config_file(); // Updates the config file
+
+		wp_send_json_success();
 	}
 	
+	static function save_file_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+		
+		$options = get_option('speedycache_options', []);
+		
+		// CSS options
+		$options['minify_html'] = isset($_POST['minify_html']);
+		$options['minify_css'] = isset($_POST['minify_css']);
+		$options['combine_css'] = isset($_POST['combine_css']);
 
-	$speedycache->image['settings'] = $settings;
-	
-	if(update_option('speedycache_img', $speedycache->image['settings'])){		
-		wp_send_json(array('success' => true));
+		$options['unused_css'] = isset($_POST['unused_css']);
+		$options['critical_css'] = isset($_POST['critical_css']);
+		$options['unusedcss_load'] = Util::sanitize_post('unusedcss_load');
+		$options['unused_css_exclude_stylesheets'] = !empty($_POST['unused_css_exclude_stylesheets']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['unused_css_exclude_stylesheets']))) : [];
+		$options['unusedcss_include_selector'] = !empty($_POST['unusedcss_include_selector']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['unusedcss_include_selector']))) : [];
+
+		// JS options
+		$options['minify_js'] = isset($_POST['minify_js']);
+		$options['combine_js'] = isset($_POST['combine_js']);
+		$options['delay_js'] = isset($_POST['delay_js']);
+		$options['delay_js_mode'] = isset($_POST['delay_js_mode']) ? Util::sanitize_post('delay_js_mode') : '';
+		$options['delay_js_excludes'] = isset($_POST['delay_js_excludes']) ? sanitize_textarea_field(wp_unslash($_POST['delay_js_excludes'])) : '';
+		$options['delay_js_scripts'] = isset($_POST['delay_js_scripts']) ? sanitize_textarea_field(wp_unslash($_POST['delay_js_scripts'])) : '';
+		$options['render_blocking'] = isset($_POST['render_blocking']);
+		$options['render_blocking_excludes'] = isset($_POST['render_blocking_excludes']) ? sanitize_textarea_field(wp_unslash($_POST['render_blocking_excludes'])) : '';
+		$options['disable_emojis'] = isset($_POST['disable_emojis']);
+		$options['lazy_load_html'] = isset($_POST['lazy_load_html']);
+
+		if(isset($_POST['lazy_load_html_elements'])){
+			$options['lazy_load_html_elements'] = !empty($_POST['lazy_load_html_elements']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['lazy_load_html_elements']))) : [];
+		}
+
+		$speedycache->options = $options;
+		update_option('speedycache_options', $options);
+		
+		wp_send_json_success();
 	}
 	
-	wp_send_json(array('success' => false));
-}
+	static function save_preload_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+		
+		$options = get_option('speedycache_options');
+		
+		$options['critical_images'] = isset($_POST['critical_images']);
+		$options['critical_image_count'] = isset($_POST['critical_images']) ? Util::sanitize_post('critical_image_count') : '';
+		$options['instant_page'] = isset($_POST['instant_page']);
+		$options['dns_prefetch'] = isset($_POST['dns_prefetch']);
+		if(!empty($_POST['dns_urls'])){
+			$options['dns_urls'] = explode("\n", sanitize_textarea_field(wp_unslash($_POST['dns_urls'])));
+		}
 
-function speedycache_update_image_list_ajax_request(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
+		$options['preload_resources'] = isset($_POST['preload_resources']);
+		$options['pre_connect'] = isset($_POST['pre_connect']);
+		
+		// TODO: here more options will be added after all modals have been added.
+		$speedycache->options = $options;
+		update_option('speedycache_options', $options);
+		
+		wp_send_json_success();
 	}
 	
-	$query_images_args = array();
-	$query_images_args['offset'] = intval(speedycache_optget('page')) * intval(speedycache_optget('per_page'));
-	$query_images_args['order'] = 'DESC';
-	$query_images_args['orderby'] = 'ID';
-	$query_images_args['post_type'] = 'attachment';
-	$query_images_args['post_mime_type'] = array('image/jpeg', 'image/png', 'image/gif');
-	$query_images_args['post_status'] = 'inherit';
-	$query_images_args['posts_per_page'] = speedycache_optget('per_page');
-	$query_images_args['meta_query'] = array(
-								array(
-									'key' => 'speedycache_optimisation',
-									'compare' => 'EXISTS'
-									)
-								);
+	static function save_media_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+		
+		$options = get_option('speedycache_options');
+		$options['gravatar_cache'] = isset($_POST['gravatar_cache']);
+		$options['lazy_load'] = isset($_POST['lazy_load']);
+		$options['lazy_load_placeholder'] = Util::sanitize_post('lazy_load_placeholder');
+		
+		if(isset($_POST['lazy_load_placeholder_custom_url'])){
+			$options['lazy_load_placeholder_custom_url'] = !empty($_POST['lazy_load_placeholder_custom_url']) ? sanitize_url(wp_unslash($_POST['lazy_load_placeholder_custom_url'])) : '';
+		}
+		
+		if(isset($_POST['exclude_above_fold'])){
+			$options['exclude_above_fold'] = !empty($_POST['exclude_above_fold']) ? Util::sanitize_post('exclude_above_fold') : '';
+		}
+		
+		if(isset($_POST['lazy_load_keywords'])){
+			$options['lazy_load_keywords'] = !empty($_POST['lazy_load_keywords']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['lazy_load_keywords']))) : [];
+		}
+		
+		$options['image_dimensions'] = isset($_POST['image_dimensions']);
+		$options['local_gfonts'] = isset($_POST['local_gfonts']);
+		$options['google_fonts'] = isset($_POST['google_fonts']);
+		$options['font_rendering'] = isset($_POST['font_rendering']);
 
-	$query_images_args['s'] = speedycache_optget('search');
+		// TODO: here more options will be added after all modals have been added.
+		$speedycache->options = $options;
+		update_option('speedycache_options', $options);
+		
+		wp_send_json_success();
+		
+	}
+	
+	static function save_object_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+		
+		if(!class_exists('Redis')){
+			wp_send_json_error(__('phpRedis Library not found', 'speedycache'));
+			return;
+		}
 
-	if(!empty($_GET['filter'])){
-		if(speedycache_optget('filter') == 'error_code'){
+		$options = get_option('speedycache_object_cache', []);
+		$options['enable'] = isset($_POST['enable_object']);
+		$options['host'] = Util::sanitize_post('host');
+		$options['port'] = Util::sanitize_post('port');
+		$options['username'] = Util::sanitize_post('username');
+		$options['password'] = Util::sanitize_post('password');
+		$options['ttl'] = Util::sanitize_post('ttl', 0);
+		$options['db-id'] = Util::sanitize_post('db-id', 0);
+		$options['persistent'] = isset($_POST['persistent']);
+		$options['admin'] = isset($_POST['admin']);
+		$options['async_flush'] = isset($_POST['async_flush']);
+		$options['serialization'] = Util::sanitize_post('serialization');
+		$options['compress'] = Util::sanitize_post('compress');
+		$options['non_cache_group'] = !empty('non_cache_group') ? explode("\n", sanitize_textarea_field(wp_unslash('non_cache_group'))) : [];
+	
+		$speedycache->object = $options;
+		update_option('speedycache_object_cache', $options);
+		
+		if(!file_put_contents(\SpeedyCache\ObjectCache::$conf_file, json_encode($speedycache->object))){
+			wp_send_json_error(__('Unable to modify Object Cache Conf file, the issue might be related to permission on your server.', 'speedycache'));
+			return;
+		}
+		
+		if(!empty($speedycache->object['enable'])){
+			\SpeedyCache\ObjectCache::update_file();
+		} else {
+			unlink(WP_CONTENT_DIR . '/object-cache.php');
+		}
+		
+		try{
+			\SpeedyCache\ObjectCache::boot();
+		} catch(Exception $e) {
+			wp_send_json_error($e->getMessage());
+			return;
+		}
+
+		\SpeedyCache\ObjectCache::flush_db();
+		\SpeedyCache\ObjectCache::$instance = null;
+
+		wp_send_json_success();
+	}
+	
+	static function save_cdn_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+		
+		$options = get_option('speedycache_cdn', []);
+		$options['enabled'] = isset($_POST['enable_cdn']);
+		$options['cdn_type'] = Util::sanitize_post('cdn_type');
+		$options['cdn_key'] = sanitize_key(wp_unslash($_POST['cdn_key']));
+		$options['cdn_url'] = sanitize_url(wp_unslash($_POST['cdn_url']));
+		$options['excludekeywords'] = !empty($_POST['excludekeywords']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['excludekeywords']))) : [];
+		$options['file_types'] = !empty($_POST['file_types']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['file_types']))) : [];
+		$options['keywords'] = !empty($_POST['keywords']) ? explode("\n", sanitize_textarea_field(wp_unslash($_POST['keywords']))) : [];
+		
+		if(!empty($options['file_types'])){
+			$options['file_types'] = map_deep($options['file_types'], 'trim');
+		}
+		
+		if(!empty($options['keywords'])){
+			$options['keywords'] = map_deep($options['keywords'], 'trim');
+		}
+		
+		if(!empty($options['excludekeywords'])){
+			$options['excludekeywords'] = map_deep($options['excludekeywords'], 'trim');
+		}
+
+		// Fetching the Zone/Pull ID's
+		if($options['cdn_type'] === 'bunny' && !empty($options['cdn_key'])){
+			$pull_id = \SpeedyCache\CDN::bunny_get_pull_id($options);
 			
-			$filter = array(
-				'key' => 'speedycache_optimisation',
-				'value' => base64_encode('"error_code"'),
-				'compare' => 'LIKE'
-			);
-
-			$filter_second = array(
-				'key' => 'speedycache_optimisation',
-				'compare' => 'NOT LIKE'
-			);
-
-			array_push($query_images_args['meta_query'], $filter);
-			array_push($query_images_args['meta_query'], $filter_second);
+			if(!empty($pull_id) && !is_array($pull_id)){
+				$options['bunny_pull_id'] = $pull_id;
+			}
+		}else if($options['cdn_type'] === 'cloudflare' && !empty($options['cdn_key'])){
+			$zone_id = \SpeedyCache\CDN::cloudflare_zone_id($options);
+			
+			if(!empty($zone_id)){
+				$options['cloudflare_zone_id'] = $zone_id;
+			}
 		}
-	}
 
-	$result = array(
-		'content' => \SpeedyCache\Image::list_content($query_images_args),
-		'result_count' => \SpeedyCache\Image::count_query($query_images_args)
-	);
+		update_option('speedycache_cdn', $options);
+		$speedycache->cdn = $options;
 
-	wp_send_json($result);
-}
+		wp_send_json_success();
+	}
+	
+	static function save_bloat_settings(){
+		check_ajax_referer('speedycache_ajax_nonce');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+		
+		$options = get_option('speedycache_bloat', []);
+		$options['disable_xmlrpc'] = isset($_POST['disable_xmlrpc']);
+		$options['remove_gfonts'] = isset($_POST['remove_gfonts']);
+		$options['disable_jmigrate'] = isset($_POST['disable_jmigrate']);
+		$options['disable_dashicons'] = isset($_POST['disable_dashicons']);
+		$options['disable_gutenberg'] = isset($_POST['disable_gutenberg']);
+		$options['disable_block_css'] = isset($_POST['disable_block_css']);
+		$options['disable_oembeds'] = isset($_POST['disable_oembeds']);
+		$options['disable_cart_fragment'] = isset($_POST['disable_cart_fragment']);
+		$options['disable_woo_assets'] = isset($_POST['disable_woo_assets']);
+		$options['disable_rss'] = isset($_POST['disable_rss']);
+		$options['update_heartbeat'] = isset($_POST['update_heartbeat']);
+		$options['heartbeat_frequency'] = Util::sanitize_post('heartbeat_frequency');
+		$options['disable_heartbeat'] = Util::sanitize_post('disable_heartbeat');
+		$options['limit_post_revision'] = isset($_POST['limit_post_revision']);
+		$options['post_revision_count'] = Util::sanitize_post('post_revision_count');
 
-function speedycache_img_optimize_image_ajax_request(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must Be admin');
-	}
-	
-	$res = \SpeedyCache\Image::optimize_single();
-	$res[1] = isset($res[1]) ? $res[1] : '';
-	$res[2] = isset($res[2]) ? $res[2] : '';
-	$res[3] = isset($res[3]) ? $res[3] : '';
-	
-	$response = array(
-		'message' => $res[0],
-		'success' => $res[1],
-		'id' => $res[2],
-		'percentage' => $res[3],
-	);
-	
-	wp_send_json($response);
-}
+		$speedycache->bloat = $options;
+		update_option('speedycache_bloat', $options);
 
-function speedycache_img_statics_ajax_request(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
+		wp_send_json_success();
+		
 	}
 	
-	$res = \SpeedyCache\Image::statics_data();
-	wp_send_json($res);
-}
+	// Adds settings of Preload and preconnect options.
+	static function add_preload_settings(){
+		check_ajax_referer('speedycache_ajax_nonce', 'security');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error('Must be admin');
+		}
+		
+		global $speedycache;
+		
+		if(empty($_REQUEST['type'])){
+			wp_send_json_error('Unable to find the settings type');
+		}
+		
+		$type = sanitize_text_field(wp_unslash($_REQUEST['type']));
 
-function speedycache_img_revert_image_ajax_request(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must Be admin');
-	}
-	
-	if(!empty($_GET['id'])){
-		$speedycache->image['id'] = (int) speedycache_optget('id');
-	}
-	
-	wp_send_json(\SpeedyCache\Image::revert());
-}
+		if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
+			wp_send_json_error(__('Could not figure out type of the setting being saved!', 'speedycache'));
+		}
 
+		if(empty($_POST['settings'])){
+			wp_send_json_error(__('No settings provided to save', 'speedycache'));
+		}
+		
+		if(empty($speedycache->options[$type])){
+			$speedycache->options[$type] = [];
+		}
+		
+		$settings = [];
+		if(empty($_POST['settings']['resource'])){
+			wp_send_json_error(__('No resource provided!', 'speedycache'));
+		}
 
-function speedycache_column_clear_cache(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	speedycache_single_delete_cache(false, esc_sql((int)speedycache_optget('id')));
-	wp_send_json(array('success' => true));
-}
+		$settings['resource'] = sanitize_url(wp_unslash($_POST['settings']['resource']));
+		$settings['crossorigin'] = isset($_POST['settings']['crossorigin']);
+		$settings['type'] = sanitize_text_field(wp_unslash($_POST['settings']['type']));
 
-function speedycache_save_varniship(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-
-	$speedycache->options['varniship'] = speedycache_optget('varniship', '127.0.0.1');
-	update_option('speedycache_options', $speedycache->options);
-}
-
-function speedycache_critical_css(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	if(empty($speedycache->license['license'])){
-		wp_send_json_error(array('message' => 'You have not linked your License, please do it before creating Critical CSS'));
-	}
-
-	$urls = \SpeedyCache\CriticalCss::get_url_list();
-
-	if(empty($urls)){
-		wp_send_json_error(array('message' => 'No URL found to create critical CSS'));
-	}
-	
-	\SpeedyCache\CriticalCss::schedule('speedycache_generate_ccss', $urls);
-	
-	wp_send_json_success(array('message' => 'The URLs have been queued to generate Critical CSS'));
-}
-
-function speedycache_generate_single_ccss(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	if(empty($speedycache->license['license'])){
-		wp_send_json_error(array('message' => 'You have not linked your License, please do it before creating Critical CSS'));
-	}
-	
-	$post_id = speedycache_optpost('post_id');
-	
-	if(empty($post_id)){
-		wp_send_json_error(array('message' => 'No post ID found'));
-	}
-	
-	$url = get_permalink($post_id);
-	
-	if(empty($url)){
-		wp_send_json_error(array('message' => 'NO URL found for the given post'));
-	}
-	
-	$res = \SpeedyCache\CriticalCss::generate([$url]);
-	
-	if($res === true){
-		wp_send_json_success(array('message' => 'CriticalCSS created successfully for this page'));
-	}
-
-	wp_send_json_error(array('message' => !empty($res) ? esc_html($res) : __('Was unable to generate CriticalCss', 'speedycache')));
-	
-}
-
-function speedycache_hide_promo(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	update_option('speedycache_promo_time', (0 - time()), false);
-	die('DONE');
-}
-
-function speedycache_flush_objects(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	try{
-		\SpeedyCache\ObjectCache::boot();
-	} catch(Exception $e){
-		wp_send_json_error(array('message' => $e->getMessage()));
-	}
-	
-	$res = \SpeedyCache\ObjectCache::flush_db();
-	
-	if(!empty($res)){
-		wp_send_json_success(array('message' => 'Object DB purged successfully'));
-	}
-	
-	wp_send_json_error(array('message' => 'There was some issue purging the Object DB'));
-}
-
-function speedycache_hide_nag(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	update_option('speedycache_enable_nag', time(), false);
-	die('DONE');
-}
-
-function speedycache_check_domain(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-
-	$url = !empty($_REQUEST['url']) ? sanitize_url(wp_unslash($_REQUEST['url'])) : '';
-	$settings = !empty($_REQUEST['settings']) ? speedycache_optreq('settings') : [];
-	
-	// We will always use Delay JS mode as All in the test
-	if(defined('SPEEDYCACHE_PRO') && !empty($settings['delay_js'])){
-		$settings['delay_js_mode'] = 'all';
-	}
-	
-	// Test will always be in test mode enabled.
-	set_transient('speedycache_test_mode', true, 1800);
-	
-	set_transient('speedycache_test_settings', $settings, 1800);
-
-	$ip = gethostbyname($url);
-	
-	if(empty($ip)){
-		wp_send_json_error();
-	}
-
-	\SpeedyCache\Delete::rm_dir(speedycache_cache_path('test'));
-	
-	// Purging Old test pages
-	wp_send_json_success();
-
-}
-
-function speedycache_test_score(){
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-
-	$url = (!empty($_GET['url']) ? sanitize_url(wp_unslash($_GET['url'])) : '');
-
-	$api_url = SPEEDYCACHE_API . 'pagespeed.php?url='. $url; 
-	
-	if(!empty($_GET['test_speedycache'])){
-		$api_url .= '?test_speedycache=1';
-	}
-
-	$res = wp_remote_post($api_url, array(
-		'sslverify' => false,
-		'timeout' => 30
-	));
-	
-	if(empty($res) || is_wp_error($res)){
-		wp_send_json_error();
-	}
-	
-	if(empty($res['body'])){
-		wp_send_json_error();
-	}
-	
-	$body = json_decode($res['body'], 1);
-	
-	if(empty($body['success'])){
-		wp_send_json_error();
-	}
-	
-	if(empty($body['results'])){
-		wp_send_json_error();
-	}
-
-	// Saving data to keep last test
-	if(!empty($_GET['test_speedycache'])){
-		update_option('speedycache_new_speed', $body['results'], false);
-	} else {
-		update_option('speedycache_old_speed', $body['results'], false);
-	}
-	
-	wp_send_json_success($body['results']);
-	
-}
-
-function speedycache_create_test_cache(){
-	
-	if(!current_user_can('manage_options')){
-		wp_send_json_error('You dont have required privilage to use this feature.');
-	}
-	
-	$url = esc_url(sanitize_url('url'));
-
-	$res = wp_safe_remote_get($url . '?test_speedycache=1', array('timeout' => 30, 'headers' => ['User-agent' => 'SpeedyCacheTest']));
-	
-	wp_send_json_success();
-}
-
-function speedycache_copy_test_settings(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	$test_settings = get_transient('speedycache_test_settings');
-	
-	if(empty($test_settings)){
-		wp_send_json_error('The Test settings has expired, please analyse again.');
-	}
-	
-	$speedycache->options = $test_settings;
-	$speedycache->options['status'] = true;
-	
-	update_option('speedycache_options', $speedycache->options);
-	
-	wp_send_json_success();
-}
-
-// Adds settings of Preload and preconnect options.
-function speedycache_preloading_add_settings(){
-	global $speedycache;
-	
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
-	}
-	
-	if(empty($_REQUEST['type'])){
-		wp_send_json_error('Unable to find the settings type');
-	}
-	
-	$type = sanitize_text_field(wp_unslash($_REQUEST['type']));
-
-	if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
-		wp_send_json_error('Could not figure out type of the setting being saved!');
-	}
-
-	if(empty($_REQUEST['settings'])){
-		wp_send_json_error('No settings provided to save');
-	}
-	
-	if(empty($speedycache->options[$type])){
-		$speedycache->options[$type] = [];
-	}
-
-	$settings = speedycache_optreq('settings');
-	$settings['resource'] = esc_url_raw($settings['resource']);
-
-	if(empty($settings['resource'])){
-		wp_send_json_error('No resource provided!');
-	}
-
-	$index = count($speedycache->options[$type]);
-	
-	if(empty($speedycache->options[$type])){
+		$index = count($speedycache->options[$type]);
+		
+		if(empty($speedycache->options[$type])){
+			$speedycache->options[$type][$index] = $settings;
+			update_option('speedycache_options', $speedycache->options);
+			wp_send_json_success($index);
+		}
+		
+		foreach($speedycache->options[$type] as $pre_connect){
+			if($pre_connect['resource'] == $settings['resource']){
+				wp_send_json_error(__('This resource has already been added before', 'speedycache'));
+			}
+		}
+		
 		$speedycache->options[$type][$index] = $settings;
 		update_option('speedycache_options', $speedycache->options);
+
 		wp_send_json_success($index);
+
+	}
+
+	static function delete_preload_resource(){
+		check_ajax_referer('speedycache_ajax_nonce', 'security');
+
+		if(!current_user_can('manage_options')){
+			wp_send_json_error('Must be admin');
+		}
+		
+		global $speedycache;
+
+		if(!isset($_REQUEST['type']) || !isset($_REQUEST['key']) || $_REQUEST['key'] == NULL){
+			wp_send_json_error('Key or Type is empty so can not delete this resource');
+		}
+
+		$type = isset($_REQUEST['type']) ? sanitize_text_field(wp_unslash($_REQUEST['type'])) : '';
+		$key = isset($_REQUEST['key']) ? sanitize_text_field(wp_unslash($_REQUEST['key'])) : '';
+
+		if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
+			wp_send_json_error('Could not figure out type of the resource being deleted!');
+		}
+
+		if(empty($speedycache->options[$type])){
+			wp_send_json_error('Nothing there to delete');
+		}
+		
+		if(array_key_exists($key, $speedycache->options[$type])){
+			unset($speedycache->options[$type][$key]);
+			update_option('speedycache_options', $speedycache->options);
+		}
+
+		wp_send_json_success();
 	}
 	
-	foreach($speedycache->options[$type] as $pre_connect){
-		if($pre_connect['resource'] == $settings['resource']){
-			wp_send_json_error('This resource has already been added before');
+	static function test_pagespeed(){
+
+		check_ajax_referer('speedycache_ajax_nonce', 'security');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		$url = home_url();
+		
+		if(empty($url)){
+			wp_send_json_error('Your site does not have a home URL');
+		}
+
+		$api_url = SPEEDYCACHE_API . 'pagespeed.php?url='. $url; 
+
+		$res = wp_remote_post($api_url, array(
+			'sslverify' => false,
+			'timeout' => 60
+		));
+		
+		if(empty($res) || is_wp_error($res)){
+			if($res->get_error_message()){
+				wp_send_json_error($res->get_error_message());
+			}
+
+			wp_send_json_error('The response turned out to be empty');
+		}
+
+		if(empty($res['body'])){
+			wp_send_json_error('The response body is empty');
+		}
+		
+		$body = json_decode($res['body'], 1);
+		
+		if(empty($body['success'])){
+			wp_send_json_error($res['body']);
+		}
+		
+		if(empty($body['results'])){
+			wp_send_json_error('Result is empty');
+		}
+
+		//Saving the pagespeed test
+		update_option('speedycache_pagespeed_test', $body['results'], false);
+
+		$body['results']['color'] = \SpeedyCache\Util::pagespeed_color($body['results']['score']);
+
+		// We will now need to filter the output.
+		wp_send_json_success($body['results']);
+	}
+	
+	static function save_excludes(){
+
+		check_ajax_referer('speedycache_ajax_nonce');
+
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		if(empty($_POST['type'])){
+			wp_send_json_error(__('You need to select a Exclude type', 'speedycache'));
+		}
+		
+		if(empty($_POST['prefix'])){
+			wp_send_json_error(__('You have not selected, the exclude option', 'speedycache'));
+		}
+		
+		$type = Util::sanitize_post('type');
+		$prefix = Util::sanitize_post('prefix');
+		
+		$single_prefixes = ['homepage', 'category', 'tag', 'post', 'page', 'archive', 'attachment', 'googleanalytics', 'woocommerce_items_in_cart'];
+		
+		if(empty($_POST['content']) && !in_array($prefix, $single_prefixes)){
+			wp_send_json_error(__('You need to fill the content field', 'speedycache'));
+		}
+		
+		$excludes = get_option('speedycache_exclude', []);
+		
+		$rule['type'] = $type;
+		$rule['prefix'] = $prefix;
+		$rule['content'] = !empty($_POST['content']) ? Util::sanitize_post('content') : '';
+		array_push($excludes, $rule);
+		
+		update_option('speedycache_exclude', $excludes);
+		Util::set_config_file(); // Updates the config file
+
+		// TODO: updating the htaccess to include the excludes.
+
+		wp_send_json_success();
+	}
+	
+	static function delete_exclude_rule(){
+
+		check_ajax_referer('speedycache_ajax_nonce');
+
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		if(!isset($_POST['rule_id'])){
+			wp_send_json_error(__('No rule ID provided to delete', 'speedycache'));
+		}
+		
+		$excludes = get_option('speedycache_exclude', []);
+		
+		if(empty($excludes)){
+			wp_send_json_error(__('Exclude rule list is already empty', 'speedycache'));
+		}
+		
+		$rule_id = sanitize_text_field(wp_unslash($_POST['rule_id']));
+		
+		if(!isset($excludes[$rule_id])){
+			wp_send_json_error(__('There is not rule with the given rule id', 'speedycache'));
+		}
+
+		unset($excludes[$rule_id]);
+
+		// TODO: updating the htaccess to include the excludes.
+		update_option('speedycache_exclude', $excludes);
+		
+		wp_send_json_success();
+	}
+	
+	static function optm_db(){
+		check_ajax_referer('speedycache_ajax_nonce', 'security');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		if(!isset($_POST['db_action'])){
+			wp_send_json_error(__('No Database optimization action present', 'speedycache'));
+		}
+		
+		$db_action = \SpeedyCache\Util::sanitize_post('db_action');
+		
+		if(!defined('SPEEDYCACHE_PRO')){
+			wp_send_json_error(__('This is a Pro feature you can not use this with a Free version', 'speedycache'));
+		}
+
+		\SpeedyCache\DB::clean($db_action);
+	}
+	
+	static function flush_objs(){
+		check_ajax_referer('speedycache_ajax_nonce', 'security');
+		
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(__('You do not have required permission.', 'speedycache'));
+		}
+		
+		global $speedycache;
+
+		if(empty($speedycache->object['enable'])){
+			wp_send_json_error(__('Object Cache need to be enabled for it to be flushed', 'speedycache'));
+		}
+
+		try{
+			\SpeedyCache\ObjectCache::boot();
+		} catch(Exception $e){
+			wp_send_json_error($e->getMessage());
+		}
+		
+		$res = \SpeedyCache\ObjectCache::flush_db();
+
+		if(!empty($res)){
+			wp_send_json_success();
 		}
 	}
+
+	static function generate_critical_css(){
+		check_ajax_referer('speedycache_ajax_nonce', 'security');
 	
-	$speedycache->options[$type][$index] = $settings;
-	update_option('speedycache_options', $speedycache->options);
+		if(!current_user_can('manage_options')){
+			wp_die('Must be admin');
+		}
 
-	wp_send_json_success($index);
+		global $speedycache;
+		
+		if(!class_exists('\SpeedyCache\CriticalCss')){
+			wp_send_json_error(array('message' => 'Your SpeedyCache Pro does not have the required file to run Critical CSS'));
+		}
+		
+		if(empty($speedycache->license['license'])){
+			wp_send_json_error(array('message' => 'You have not linked your License, please do it before creating Critical CSS'));
+		}
 
-}
+		$urls = \SpeedyCache\CriticalCss::get_url_list();
 
-function speedycache_preloading_delete_resource(){
-	global $speedycache;
-
-	if(!current_user_can('manage_options')){
-		wp_die('Must be admin');
+		if(empty($urls)){
+			wp_send_json_error(array('message' => 'No URL found to create critical CSS'));
+		}
+		
+		\SpeedyCache\CriticalCss::schedule('speedycache_generate_ccss', $urls);
+		
+		wp_send_json_success(array('message' => 'The URLs have been queued to generate Critical CSS'));
 	}
-
-	if(!isset($_REQUEST['type']) || !isset($_REQUEST['key']) || $_REQUEST['key'] == NULL){
-		wp_send_json_error('Key or Type is empty so can not delete this resource');
-	}
-
-	$type = isset($_REQUEST['type']) ? sanitize_text_field(wp_unslash($_REQUEST['type'])) : '';
-	$key = isset($_REQUEST['key']) ? sanitize_text_field(wp_unslash($_REQUEST['key'])) : '';
-
-	if(!in_array($type, ['pre_connect_list', 'preload_resource_list'])){
-		wp_send_json_error('Could not figure out type of the resource being deleted!');
-	}
-
-	if(empty($speedycache->options[$type])){
-		wp_send_json_error('Nothing there to delete');
-	}
-	
-	if(array_key_exists($key, $speedycache->options[$type])){
-		unset($speedycache->options[$type][$key]);
-		update_option('speedycache_options', $speedycache->options);
-	}
-
-	wp_send_json_success();
 }

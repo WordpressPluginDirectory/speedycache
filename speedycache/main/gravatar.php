@@ -20,7 +20,7 @@ class Gravatar{
 		}
 		
 		// Path to Gravatars
-		$path = speedycache_cache_path('gravatars/');
+		$path = \SpeedyCache\Util::cache_path('gravatars');
 
 		if(!is_dir($path)){
 			mkdir($path, 0755, true);
@@ -108,7 +108,7 @@ class Gravatar{
 	
 	// Deletes all the gravatar stored
 	static function delete(){
-		$path = speedycache_cache_path('gravatars/');
+		$path = \SpeedyCache\Util::cache_path('gravatars');
 		
 		if(!file_exists($path)){
 			return;
@@ -132,7 +132,7 @@ class Gravatar{
 	
 	static function convert_path_to_link($path){
 		preg_match('/\/cache\/speedycache\/.+/', $path, $out);
-		$prefix_link = str_replace(array('http:', 'https:'), '', SPEEDYCACHE_WP_CONTENT_URL);
+		$prefix_link = str_replace(array('http:', 'https:'), '', content_url());
 
 		return $prefix_link . $out[0];
 	}
