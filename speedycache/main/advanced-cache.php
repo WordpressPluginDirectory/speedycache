@@ -30,10 +30,11 @@ if(preg_match('/(\/){2}$/', $_SERVER['REQUEST_URI'])){
 
 function speedycache_ac_serve_cache(){
 
-	
-	$ignored_parameters = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'utm_source_platform', 'fbclid'];
+	$ignored_parameters = ['fbclid', 'utm_id', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_source_platform', 'gclid', 'dclid', 'msclkid', 'ref', 'fbaction_ids', 'fbc', 'fbp', 'clid', 'mc_cid', 'mc_eid', 'hsCtaTracking', 'hsa_cam', 'hsa_grp', 'hsa_mt', 'hsa_src', 'hsa_ad', 'hsa_acc', 'hsa_net', 'hsa_kw'];
 
 	$uri = $_SERVER['REQUEST_URI'];
+	$uri = preg_replace('/\.{2,}/', '', $uri); // Cleaning the path
+
 	$parsed_uri = parse_url($_SERVER['REQUEST_URI']);
 	if(!empty($parsed_uri) && !empty($parsed_uri['query'])){
 		parse_str($parsed_uri['query'], $parsed_query);
@@ -50,7 +51,12 @@ function speedycache_ac_serve_cache(){
 	
 	// We dont know if the site is a /directory based so we just hit and try
 	$site_dir = '';
-	$path = trim($parsed_uri['path'], '/');
+
+	$path = '';
+	if(!empty($parsed_uri['path'])){
+		$path = trim($parsed_uri['path'], '/');
+	}
+
 	if(strpos($path, '/') !== FALSE){
 		$parsed_path = explode('/', $path);
 		$site_dir = $parsed_path[0];
@@ -107,10 +113,10 @@ function speedycache_ac_serve_cache(){
 	$cache_path = WP_CONTENT_DIR.'/cache/speedycache/' . $_SERVER['HTTP_HOST'];
 
 	// Check for Mobile
-	if(preg_match('/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera (Mini|Mobi)/i', $_SERVER['HTTP_USER_AGENT'])) {
+	if(!empty($speedycache_ac_config['settings']['mobile']) && preg_match('/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera (Mini|Mobi)/i', $_SERVER['HTTP_USER_AGENT'])) {
 		if(!empty($speedycache_ac_config['settings']['mobile_theme'])){
 			$cache_path .= '/mobile-cache' . $uri;
-		} else if(!empty($speedycache_ac_config['settings']['mobile'])){
+		} else {
 			return; // If just mobile is enabled then we don't want to show desktop verison of cache on mobile.
 		}
 	} else {

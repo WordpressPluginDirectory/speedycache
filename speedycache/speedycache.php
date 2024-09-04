@@ -3,7 +3,7 @@
 Plugin Name: SpeedyCache
 Plugin URI: https://speedycache.com
 Description: SpeedyCache is a plugin that helps you reduce the load time of your website by means of caching, minification, and compression of your website.
-Version: 1.2.0
+Version: 1.2.2
 Author: Softaculous Team
 Author URI: https://speedycache.com/
 Text Domain: speedycache
@@ -49,7 +49,7 @@ if(defined('SPEEDYCACHE_VERSION')) {
 	return;
 }
 
-define('SPEEDYCACHE_VERSION', '1.2.0');
+define('SPEEDYCACHE_VERSION', '1.2.2');
 define('SPEEDYCACHE_DIR', dirname(__FILE__));
 define('SPEEDYCACHE_FILE', __FILE__);
 define('SPEEDYCACHE_BASE', plugin_basename(SPEEDYCACHE_FILE));
@@ -151,9 +151,13 @@ function speedycache_load_plugin(){
 	add_action('cron_schedules', '\SpeedyCache\Util::custom_preload_cron');
 	add_action('init', '\SpeedyCache\Util::lifespan_cron');
 	add_action('init', '\SpeedyCache\Util::preload_cron');
-	add_action('after_switch_theme', '\SpeedyCache\Delete::run'); // Deletes cache when Theme changes
 	add_action('speedycache_preload_split', '\SpeedyCache\Preload::cache');
 	add_action('speedycache_preload', '\SpeedyCache\Preload::build_preload_list');
+	add_action('after_switch_theme', '\SpeedyCache\Delete::run'); // Deletes cache when Theme changes
+	add_action('transition_post_status', '\SpeedyCache\Delete::on_status_change', 10, 3);
+	add_action('transition_comment_status', '\SpeedyCache\Delete::on_comment_status', 10, 3);
+	add_action('admin_bar_menu', '\SpeedyCache\Admin::admin_bar', PHP_INT_MAX);
+	add_action('woocommerce_order_status_changed', '\SpeedyCache\Delete::order');
 
 	if(!is_admin()){
 		\SpeedyCache\Cache::init();
@@ -167,7 +171,6 @@ function speedycache_load_plugin(){
 
 // Looks if SpeedyCache just got updated
 function speedycache_update_check(){
-
 	$current_version = get_option('speedycache_version');	
 	$version = (int) str_replace('.', '', $current_version);
 

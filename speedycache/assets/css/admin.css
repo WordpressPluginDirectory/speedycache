@@ -1,6 +1,7 @@
 :root {
 	--speedycache-color: #3d5afe;
 	--speedycache-txcolor: #0f172a; 
+	--speedycache-red: #dc3545;
 }
 
 #speedycache-admin{
@@ -1066,4 +1067,27 @@ left: 0;
 width: 100%;
 height: 100%;
 z-index: 9998;
+}
+
+.speedycache-perf-extras{
+display:flex;
+flex-direction:column;
+gap:5px;
+font-size:14px;
+justify-content:space-around;
+width:50%;
+}
+
+.speedycache-perf-extras div {
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.speedycache-perf-extras div span{
+margin-left: 10px;
+padding: 6px;
+border-radius: 2px;
+background-color: #0c6;
+color: white;
 }

@@ -58,6 +58,7 @@ class Htaccess {
 		if(!empty($admin_users) && is_array($admin_users)){
 			$user_names = '';
 			$user_names = implode('|', $admin_users);
+			$user_names = preg_replace("/\s/", "\s", $user_names);
 			$admin_cookie = 'RewriteCond %{HTTP:Cookie} !wordpress_logged_in_[^\=]+\='.$user_names;
 		}
 
@@ -207,9 +208,9 @@ FileETag None
 <IfModule mod_headers.c>
 	Header set x-speedycache-source "Server"
 	Header set Cache-Tag "'.$parsed_url['host'].'"
-	Header set CDN-Cache-Control "max-age=2592000"
-	Header set Pragma "public"
-	Header set Cache-Control "max-age=3600, public"
+	Header set CDN-Cache-Control "max-age=1296000"
+	Header set Cache-Control "public"
+	Header unset Pragma
 	Header unset Last-Modified
 </IfModule>
 </FilesMatch>

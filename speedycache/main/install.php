@@ -28,6 +28,7 @@ class Install{
 
 		\SpeedyCache\Htaccess::init();
 		self::set_advanced_cache();
+		\SpeedyCache\Util::set_config_file();
 	}
 
 	// Called during Deactivation

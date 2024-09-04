@@ -4,7 +4,7 @@ Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy l
 Requires at least: 4.7
 Tested up to: 6.6
 Requires PHP: 7.3
-Stable tag: 1.2.0
+Stable tag: 1.2.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -25,11 +25,10 @@ Other than caching SpeedyCache can also do the following:-
 
 == Free Features ==
 * **Caching:** Storing copies of the web pages of the desktop version. Caching happens when a user visits a webpage on your website
-* **Precache:** Precache creates a cache at regular intervals of time reducing the load on the server to cache files.
+* **Preload:** Preload makes sure the user always sees the cached version of your website as it periodically creates cache.
 * **Combine CSS:** Combines CSS files present in the header of the page reducing HTTP requests.
 * **Minify CSS:** Reduces the size of the CSS files.
-* **Test Mode:** Test Cache settings before pushing it to live site.
-* **Automatic Cache:** If enabled it will cache immediately after a page/post is created/updated.
+* **Automatic Cache:** Creates cache of post when it gets deleted if preload is enabled.
 * **Combine JS:** Combines JS files present in the header of the page reducing HTTP requests.
 * **GZIP:** It applies GZIP compression on the files hence reducing the file size sent from the server.
 * **Browser Caching:** Caches the website on the browser of the client for repeating visitors.
@@ -37,7 +36,7 @@ Other than caching SpeedyCache can also do the following:-
 * **Disable Emojis:** You can remove the emoji inline CSS and wp-emoji-release.min.js.
 * **Exclude:** You can exclude certain Pages, User-Agent, Cookies, CSS, or JS from being cached.
 * **CDN:** CDN helps improve website speed by placing the static files of your cached on their network of servers hence helping deliver content faster at any point in the world.
-* **Display Swap:** Adds dispaly swap to Google font URL, so when Google font loads the font will stay visible.
+* **Display Swap:** Adds dispaly swap to Google font URL, so when Google font loads the font will stay visible this is enabled by default.
 * **Purge Varnish:** If enabled it will purge Varnish cache, whenever cache from SpeedyCache is purged.
 * **Gravatar Cache:** Host Gravatars on your server.
 * *Improve Font Rendering:** Adding CSS property of text-rendering to prioritize speed of render of Fonts.
@@ -53,13 +52,12 @@ Get professional support and more features to make your website load faster with
 * **Local Google Fonts:** Cache the Google fonts to be compliant with the GDPR rules.
 * **Lazy Load:** Loading all assets at once can make the page load slower hence lazy load helps by only loading certain resources when they come into the viewport.
 * **Minify HTML:** It removes empty lines, line breaks, minifies inline Js And Css, removes comments and space in Tags
-* **Advanced Minify CSS:** Reduces CSS file size.
 * **Minify JS:** Reduces JS file size.
 * **Delay JS:** Delays the JS to load on user interaction to reduce or remove the issue of Unused JS.
 * **Advanced Combine JS:** Combines JS files placed in the footer section helping reduce HTTP calls.
 * **Render blocking JS:** Before rendering a page the browser parses the HTML to create a DOM tree and if an external script comes it has to stop and wait for the script to execute hence the rendering of the page ends up taking time, hence Render blocking JS feature helps in deferring the load of JS after the render has happened hence the first load get faster.
 * **Delete Cache Stats:** Provides statistics about the cached files of Desktop or Mobile version and combined/ minified version of CSS and JS.
-* **Mobile Theme:** Caches the mobile version of your website and shows that version on mobile devices.
+* **Mobile Cache:** Caches the mobile version of your website and shows that version on mobile devices.
 * **Database Cleanup:** Database cleanup helps you free up your database storage from temporary data, trashed contents, and post revisions which may take a lot of your database storage.
 * **PreConnect:** Preconnect improves website loading times by establishing early connections to third-party domains.
 * **Preload:** Preload improves website performance by downloading resources in advance, before they are needed.
@@ -129,9 +127,6 @@ Data cleanup cleans the database by removing the following data:-
 5. All Transient options
 6. Expired Transient Options
 
-== Credits ==
-SpeedyCache version 1.1.9 and below was a forked software from WP Fastest Cache [https://wordpress.org/plugins/wp-fastest-cache/](https://wordpress.org/plugins/wp-fastest-cache/). SpeedyCache 1.2.0 is a new software written from scratch.
-
 == Frequently Asked Questions ==
 
 = How to install SpeedyCache =
@@ -151,6 +146,22 @@ You can report security bugs through the Patchstack Vulnerability Disclosure Pro
 4. SpeedyCache Exclude page
 
 == Changelog ==
+
+= 1.2.2 (3rd September 2024) =
+* [Added] Deletion of Cache on comment status change.
+* [Added] Admin Bar option to delete cache.
+* [Added] Cache deletion on WooCommerce order completion.
+* [Improvement] AutoCache has been improved(is enabled by default if preload is enabled).
+* [Improvement] Cache Logs have been improved further.
+* [Bug-Fix] There was an issue with saving Delay JS excludes that has been fixed.
+* [Bug-Fix] There was an issue with excluding pages, that has been fixed.
+* [Bug-Fix] In cache lifetime Mobile cache was not getting deleted, that has been fixed.
+
+= 1.2.1 (27th August 2024) =
+* [Improvement] Cache purge on post status change has been improved.
+* [Bug-Fix] There was an issue with htaccess rule in case the admin username had a space.
+* [Bug-Fix] There was an issue in which user was unable to open SpeedyCache settings page, that has been fixed.
+* [Bug-Fix] There was an issue with serving Mobile specific cache that has been fixed.
 
 = 1.2.0 (23nd August 2024) =
 * [Improvement] The UI has been improved, by reducing some unnecessary options or making them default.

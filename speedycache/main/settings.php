@@ -125,10 +125,10 @@ class Settings{
 		
 		
 		$speedycache->object_memory = 'None';	
-		if(class_exists('Redis') && class_exists('\SpeedyCache\ObjectCache')){
+		if(!empty($speedycache->object['enable']) && class_exists('Redis') && class_exists('\SpeedyCache\ObjectCache')){
 			try{
 				$speedycache->object_memory = \SpeedyCache\ObjectCache::get_memory();
-			} catch(Exception $e) {
+			} catch(\Exception $e) {
 				$memory = 'None';
 			}
 		}
@@ -186,7 +186,7 @@ class Settings{
 				<div class="speedycache-is-block">
 					<h4>Cache Info</h4>
 					<span>File Cache: '.(!empty($speedycache->options['status']) ? esc_html__('Enabled') : esc_html__('Disabled')).'</span>
-					<span>Object Cache: Disabled</span>
+					<span>Object Cache: '.(!empty($speedycache->object['enable']) ? esc_html__('Enabled') : esc_html__('Disabled')).'</span>
 					<span>CDN: '.(!empty($speedycache->cdn) && !empty($speedycache->cdn['cdn_type']) ? esc_html(ucfirst($speedycache->cdn['cdn_type'])) : 'OFF').'</span>
 				</div>
 				</div>
@@ -455,7 +455,7 @@ class Settings{
 				</label>
 				<div class="speedycache-option-info">
 					<span class="speedycache-option-name">'.esc_html__('Minify HTML', 'speedycache').'</span>
-					<span class="speedycache-option-desc">'.esc_html__('Removes comments, extra spaces', 'speedycache').'span>
+					<span class="speedycache-option-desc">'.esc_html__('Removes comments, extra spaces', 'speedycache').'</span>
 				</div>
 			</div>';
 		} else {
@@ -683,13 +683,13 @@ class Settings{
 							<label for="speedycache_delay_js_excludes" style="width:100%;">
 								<span style="font-weight:500; margin:20px 0 3px 0; display:block;">Scripts to exclude</span>
 								<span style="display:block; font-weight:400; font-size:12px; color: #2c2a2a;">Enter Below The Scipts that you no not want to be delayed.</span>
-								<textarea name="delay_js_excludes" id="speedycache_delay_js_excludes" rows="4" placeholder="jquery.min">'.(!empty($speedycache->options['delay_js_excludes']) ? esc_html(implode("\n", $speedycache->options['delay_js_excludes'])) : '').'</textarea>
+								<textarea name="delay_js_excludes" id="speedycache_delay_js_excludes" rows="4" placeholder="jquery.min">'.(!empty($speedycache->options['delay_js_excludes']) && is_array($speedycache->options['delay_js_excludes']) ? esc_html(implode("\n", $speedycache->options['delay_js_excludes'])) : '').'</textarea>
 							</label>
 							
 							<label for="speedycache_delay_js_scripts" style="width:100%;">
 								<span style="font-weight:500; margin:20px 0 3px 0; dispaly:block;">Scripts to Delay</span>
 								<span style="display:block; font-weight:400; font-size:12px; color: #2c2a2a;">Enter the scripts that you want to be delayed like googletagmanager.com</span>
-								<textarea name="delay_js_scripts" id="speedycache_delay_js_scripts" rows="4" placeholder="googletagmanager.com">'.(!empty($speedycache->options['delay_js_scripts']) ? esc_html(implode("\n", $speedycache->options['delay_js_scripts'])) : '').'</textarea>
+								<textarea name="delay_js_scripts" id="speedycache_delay_js_scripts" rows="4" placeholder="googletagmanager.com">'.(!empty($speedycache->options['delay_js_scripts']) && is_array($speedycache->options['delay_js_scripts']) ? esc_html(implode("\n", $speedycache->options['delay_js_scripts'])) : '').'</textarea>
 								<h5>Suggestions</h5>
 								<p>
 								fbevents.js<br>
@@ -747,7 +747,7 @@ class Settings{
 						<label for="speedycache_render_blocking_excludes" style="width:100%;">
 							<span style="font-weight:500; margin:20px 0 3px 0; display:block;">'.esc_html__('Exclude script from Render Blocking JS', 'speedycache').'</span>
 							<span style="display:block; font-weight:400; font-size:12px; color: #2c2a2a;">'.esc_html__('Add one script per line ,Enter the script URL or script ID', 'speedycache').'</span>
-							<textarea name="render_blocking_excludes" id="speedycache_render_blocking_excludes" rows="4" style="width:100%">'.(!empty($speedycache->options['render_blocking_exclude']) ? esc_html(implode("\n", $speedycache->options['render_blocking_exclude'])) : '').'</textarea>
+							<textarea name="render_blocking_excludes" id="speedycache_render_blocking_excludes" rows="4" style="width:100%">'.(!empty($speedycache->options['render_blocking_exclude']) && is_array($speedycache->options['render_blocking_exclude']) ? esc_html(implode("\n", $speedycache->options['render_blocking_exclude'])) : '').'</textarea>
 						</label>
 					</div>
 					<div class="speedycache-modal-footer">

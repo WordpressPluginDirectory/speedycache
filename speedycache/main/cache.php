@@ -10,6 +10,7 @@ use \SpeedyCache\Util;
 
 class Cache {
 	static $cache_file_path = '';
+	static $ignored_parameters = ['fbclid', 'utm_id', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_source_platform', 'gclid', 'dclid', 'msclkid', 'ref', 'fbaction_ids', 'fbc', 'fbp', 'clid', 'mc_cid', 'mc_eid', 'hsCtaTracking', 'hsa_cam', 'hsa_grp', 'hsa_mt', 'hsa_src', 'hsa_ad', 'hsa_acc', 'hsa_net', 'hsa_kw'];
 
 	static function init(){
 		global $speedycache;
@@ -79,6 +80,8 @@ class Cache {
 		if(strpos($cache_path, 'mobile-cache') !== FALSE){
 			$mobile = 'Mobile: ';
 		}
+		
+		$cache_path = wp_normalize_path($cache_path);
 
 		file_put_contents($cache_path, $content . "\n<!-- ".esc_html($mobile)."Cache by SpeedyCache https://speedycache.com -->");
 		delete_option('speedycache_html_size');
@@ -93,17 +96,21 @@ class Cache {
 		}
 
 		$host = $_SERVER['HTTP_HOST'];
-		$request_uri = $_SERVER['REQUEST_URI'];
+		$request_uri = sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']));
+		$request_uri = preg_replace('/\.{2,}/', '', $request_uri); // Cleaning the path
+		$request_uri = remove_query_arg(self::$ignored_parameters, $request_uri); // Cleaning ignored query
+		$parsed_uri = wp_parse_url($request_uri);
+
 		$path = SPEEDYCACHE_CACHE_DIR;
 		$path .= '/' . $host;
-		
+
 		if(wp_is_mobile() && !empty($speedycache->options['mobile_theme'])){
 			$path .= '/mobile-cache';
 		} else {
 			$path .= '/all';
 		}
-		
-		$path .= $request_uri;
+
+		$path .= $parsed_uri['path'];
 		self::$cache_file_path = $path;
 
 		return $path;
@@ -114,7 +121,7 @@ class Cache {
 		
 		if(empty($speedycache->options['status'])) return false;
 
-		if(empty($_SERVER['REQUEST_METHOD'] || $_SERVER['REQUEST_METHOD'] != 'GET')) return false;
+		if(empty($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] != 'GET') return false;
 		
 		if(defined('WP_CLI') && !empty(WP_CLI)) return false;
 
@@ -127,6 +134,8 @@ class Cache {
 		if(preg_match('/(wp-(?:admin|login|register|comments-post|cron|json))/', $_SERVER['REQUEST_URI'])) return false;
 		
 		if(preg_match('/html.*\s(amp|⚡)\s/', substr($content, 0, 300))) return false;
+		
+		if(wp_is_mobile() && !empty($speedycache->options['mobile']) && empty($speedycache->options['mobile_theme'])) return false;
 
 		if(is_admin()) return false;
 		
@@ -145,7 +154,11 @@ class Cache {
 		if(function_exists('is_cart') && is_cart()) return false;
 
 		if(function_exists('is_checkout') && is_checkout()) return false;
+		
+		if(function_exists('is_account_page') && is_account_page()) return false;
 
+		if(!self::can_handle_query()) return false;
+	
 		return true;
 	}
 
@@ -214,7 +227,7 @@ class Cache {
 		}
 		
 		// Delay JS
-		if(!empty($speedycache->options['render_blocking']) && class_exists('\SpeedyCache\ProOptimizations')){
+		if(!empty($speedycache->options['delay_js']) && class_exists('\SpeedyCache\ProOptimizations')){
 			\SpeedyCache\ProOptimizations::delay_js($content);
 		}
 		
@@ -228,7 +241,9 @@ class Cache {
 			\SpeedyCache\ProOptimizations::img_lazy_load($content);
 		}
 		
-		
+		// For other plugins to hook into.
+		$content = (string) apply_filters('speedycache_content', $content);
+
 		// ----- DO NOT DO ANY OPTIMIZATION BELOW THIS ------
 		// Unused and Critical CSS
 		if(
@@ -284,21 +299,40 @@ class Cache {
 		if(empty($excludes)){
 			return false;
 		}
-		
+
+		$is_excluded = false;
+
 		foreach($excludes as $rule){
 			switch($rule['type']){
 				case 'page':
-					return self::is_page_excluded($rule);
+					$is_excluded = self::is_page_excluded($rule);
+					break;
 
 				case 'useragent':
-					return self::is_useragent_excluded($rule);
+					$is_excluded = self::is_useragent_excluded($rule);
 
 				case 'cookie':
-					return self::is_cookie_excluded($rule);
+					$is_excluded = self::is_cookie_excluded($rule);
 			}
 			
+			if(!empty($is_excluded)){
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	static function can_handle_query(){
+		$uri = sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']));
+		$uri = remove_query_arg(self::$ignored_parameters, $uri);
+		$parsed_uri = wp_parse_url($uri);
+		
+		if(!empty($parsed_uri['query'])){
 			return false;
 		}
+
+		return true;
 	}
 	
 	static function is_page_excluded($rule){

@@ -15,10 +15,10 @@ class Admin{
 	static function hooks(){
 		add_action('admin_notices', '\SpeedyCache\Admin::combitibility_notice');
 		add_action('admin_menu', '\SpeedyCache\Admin::list_menu');
-		//add_action('wp_before_admin_bar_render', '\SpeedyCache\Admin::admin_bar');
 		do_action('speedycache_pro_admin_hooks'); // adds hooks for the pro-version.
 		add_action('admin_post_speedycache_delete_cache', '\SpeedyCache\Admin::delete_cache');
 		add_action('admin_post_speedycache_delete_single', '\SpeedyCache\Admin::delete_single');
+		add_action('admin_post_speedycache_delete_single_url', '\SpeedyCache\Admin::delete_single_url');
 		
 		$post_types = ['post', 'page', 'category', 'tag'];
 
@@ -66,14 +66,14 @@ class Admin{
 			wp_die(esc_html__('You do not have a required privilege', 'speedycache'));
 		}
 
-		$delete['minified'] = isset($_POST['minified']);
-		$delete['font'] = isset($_POST['font']);
-		$delete['gravatars'] = isset($_POST['gravatars']);
-		$delete['domain'] = isset($_POST['domain']);
-		$delete['preload'] = isset($_POST['preload_cache']);
+		$delete['minified'] = isset($_REQUEST['minified']);
+		$delete['font'] = isset($_REQUEST['font']);
+		$delete['gravatars'] = isset($_REQUEST['gravatars']);
+		$delete['domain'] = isset($_REQUEST['domain']);
+		$delete['preload'] = isset($_REQUEST['preload_cache']);
 
 		\SpeedyCache\Delete::run($delete);
-		$redirect_to = esc_url_raw(wp_unslash($_POST['_wp_http_referer']));
+		$redirect_to = esc_url_raw(wp_unslash($_REQUEST['_wp_http_referer']));
 
 		wp_safe_redirect($redirect_to);
 		die();
@@ -92,6 +92,20 @@ class Admin{
 		$redirect_to = esc_url_raw(wp_unslash($_REQUEST['referer']));
 
 		wp_safe_redirect($redirect_to);
+		die();
+	}
+	
+	static function delete_single_url(){
+		check_admin_referer('speedycache_post_nonce', 'security');
+		
+		if(!current_user_can('manage_options')){
+			wp_die(esc_html__('You do not have a required privilege', 'speedycache'));
+		}
+
+		$url = esc_url_raw(wp_unslash($_REQUEST['referer']));
+		\SpeedyCache\Delete::url($url);
+
+		wp_safe_redirect($url);
 		die();
 	}
 	
@@ -135,34 +149,50 @@ class Admin{
 		if(!current_user_can('manage_options')){
 			return;
 		}
-		
-		$request_url   = remove_query_arg( '_wp_http_referer' );
+
+		$request_url = remove_query_arg( '_wp_http_referer' );
 
 		$actions['speedycache_delete'] = '<a href="'.admin_url('admin-post.php?action=speedycache_delete_single&post_id='.$post->ID.'&security='.wp_create_nonce('speedycache_post_nonce')).'&referer='.esc_url($request_url).'">'.esc_html__('Delete Cache', 'speedycache').'</a>';
 		
 		return $actions;
 	}
 	
-	static function admin_bar(){
-		global $wp_admin_bar, $pagenow;
+	static function admin_bar($admin_bar){
+		global $post;
 		
-		$wp_admin_bar->add_node(array(
+		if(!current_user_can('manage_options')){
+			return;
+		}
+		
+		$request_url = remove_query_arg('_wp_http_referer');
+
+		$admin_bar->add_menu([
 			'id'    => 'speedycache-adminbar',
 			'title' => __('SpeedyCache', 'speedycache'),
-		));
+		]);
 
-		$wp_admin_bar->add_menu(array(
+		$admin_bar->add_menu(array(
 			'id'    => 'speedycache-adminbar-delete-all',
 			'title' => __('Delete all Cache', 'speedycache'),
 			'parent' => 'speedycache-adminbar',
+			'href' => wp_nonce_url(admin_url('admin-post.php?action=speedycache_delete_cache&_wp_http_referer='.esc_url($request_url)),  'speedycache_post_nonce'),
+			'meta' => ['class' => 'speedycache-adminbar-options']
+		));
+		
+		$admin_bar->add_menu(array(
+			'id'    => 'speedycache-adminbar-delete-minified',
+			'title' => __('Delete Cache and Minified', 'speedycache'),
+			'parent' => 'speedycache-adminbar',
+			'href' => wp_nonce_url(admin_url('admin-post.php?action=speedycache_delete_cache&minified=true&_wp_http_referer='.esc_url($request_url)),  'speedycache_post_nonce'),
 			'meta' => ['class' => 'speedycache-adminbar-options']
 		));
 
 		if(!is_admin()){
-			$wp_admin_bar->add_menu(array(
+			$admin_bar->add_menu(array(
 				'id'    => 'speedycache-adminbar-delete',
 				'parent' => 'speedycache-adminbar',
-				'title' => __('Clean this Page', 'speedycache'),
+				'title' => __('Clear this page\'s cache', 'speedycache'),
+				'href' => wp_nonce_url(admin_url('admin-post.php?action=speedycache_delete_single_url&referer='.esc_url($request_url)), 'speedycache_post_nonce', 'security'),
 				'meta' => ['class' => 'speedycache-adminbar-options']
 			));
 		}

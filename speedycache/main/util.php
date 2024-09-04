@@ -115,11 +115,11 @@ class Util{
 	static function set_config_file(){
 		global $speedycache;
 		
-		$export_config['settings']['status'] = isset($speedycache->options['status']);
-		$export_config['settings']['gzip'] = isset($speedycache->options['gzip']);
-		$export_config['settings']['logged_in_user'] = isset($speedycache->options['logged_in_user']);
-		$export_config['settings']['mobile_theme'] = isset($speedycache->options['mobile_theme']);
-		$export_config['settings']['mobile'] = isset($speedycache->options['mobile']);
+		$export_config['settings']['status'] = !empty($speedycache->options['status']);
+		$export_config['settings']['gzip'] = !empty($speedycache->options['gzip']);
+		$export_config['settings']['logged_in_user'] = !empty($speedycache->options['logged_in_user']);
+		$export_config['settings']['mobile_theme'] = !empty($speedycache->options['mobile_theme']);
+		$export_config['settings']['mobile'] = !empty($speedycache->options['mobile']);
 		//$export_config['user_agents'] = speedycache_get_excluded_useragent();
 		$export_config['excludes'] = get_option('speedycache_exclude', []);
 

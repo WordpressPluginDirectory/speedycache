@@ -67,19 +67,18 @@ class Preload{
 	static function cache(){
 		global $speedycache;
 
-		$preload_urls = get_transient('speedycache_preload_transient', []);
+		$preload_urls = get_transient('speedycache_preload_transient');
 		$cache_urls = 0;
-		
-		if(empty($preload_urls)){
+
+		if(empty($preload_urls) || !is_array($preload_urls)){
 			return;
 		}
 
 		foreach($preload_urls as $key => $url){
 			if($cache_urls >= 10){
-				set_transient('speedycache_preload_transient', $preload_urls, HOUR_IN_SECONDS);
-				wp_schedule_single_event(time() + 60, 'speedycache_preload_split');
+				break;
 			}
-			
+
 			wp_remote_get($url, [
 				'headers' => [
 					'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
@@ -101,8 +100,39 @@ class Preload{
 				]);
 			}
 
-			unset($preload_urls[$key]); // We remove from the list to be preloaded	
+			unset($preload_urls[$key]); // We remove from the list to be preloaded
 			$cache_urls++;
+		}
+		
+		if(empty($preload_urls)){
+			set_transient('speedycache_preload_transient', [], HOUR_IN_SECONDS);
+			return;
+		}
+
+		wp_schedule_single_event(time() + 60, 'speedycache_preload_split');
+		set_transient('speedycache_preload_transient', $preload_urls, HOUR_IN_SECONDS);
+	}
+	
+	// This will push a request to preload URLS
+	// TODO: need to add a lock here
+	static function url($urls){
+
+		if(!is_array($urls)){
+			$urls = [$urls];
+		}
+
+		$preload_urls = get_transient('speedycache_preload_transient');
+		if(empty($preload_urls) || !is_array($preload_urls)){
+			$preload_urls = [];
+		}
+
+		$preload_urls = array_merge($preload_urls, $urls);
+		$preload_urls = array_unique($preload_urls);
+
+		set_transient('speedycache_preload_transient', $preload_urls, HOUR_IN_SECONDS);
+
+		if(!wp_next_scheduled('speedycache_preload_split')){
+			wp_schedule_single_event(time() + 60, 'speedycache_preload_split');
 		}
 	}
 }

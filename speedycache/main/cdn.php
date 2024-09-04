@@ -121,7 +121,7 @@ class CDN{
 		if($speedycache->cdn['cdn_type'] == 'bunny'){
 			self::purge_bunny($speedycache->cdn);
 		}elseif($speedycache->cdn['cdn_type'] == 'cloudflare'){
-			self::purge_clooudflare($speedycache->cdn);
+			self::purge_cloudflare($speedycache->cdn);
 		}
 		
 	}
@@ -179,6 +179,10 @@ class CDN{
 	
 	static function purge_bunny($cdn){
 
+		if(empty($cdn['cdn_key']) || empty($cdn['cdn_url'])){
+			return false;
+		}
+
 		$pull_zone = $cdn['cdn_url']; // bunny cdn calls it cdn url as pull zone
 		$access_key = $cdn['cdn_key'];
 		$pull_id = !empty($cdn['bunny_pull_id']) ? $cdn['bunny_pull_id'] : '';
@@ -215,6 +219,10 @@ class CDN{
 	}
 	
 	static function cloudflare_zone_id(&$cdn){
+		
+		if(empty($cdn['cdn_key'])){
+			return false;
+		}
 
 		$api_token = $cdn['cdn_key'];
 		$domain = parse_url(home_url(), PHP_URL_HOST);
@@ -244,6 +252,10 @@ class CDN{
 	}
 	
 	static function purge_cloudflare($cdn){
+		
+		if(empty($cdn['cloudflare_zone_id']) || empty($cdn['cdn_key'])){
+			return;
+		}
 		
 		$zone_id = $cdn['cloudflare_zone_id'];
 		$api_token = $cdn['cdn_key'];
