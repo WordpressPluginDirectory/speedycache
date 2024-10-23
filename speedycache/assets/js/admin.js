@@ -208,6 +208,16 @@
 			return;
 		});
 		
+		// Toggle exact time field of cache lifespan
+		jQuery('#speedycache-run-exact-time').click(function(e){
+			if(jQuery(this).is(':checked')){
+				jQuery('#speedycache-exact-time-selector').css('display', 'flex');
+				return;
+			}
+
+			jQuery('#speedycache-exact-time-selector').hide();
+		});
+		
 		jQuery('#speedycache-ll-type').change(function(e){
 			let type = jQuery(e.target).val(),
 			custom_input = jQuery('#speedycache-custom-ll-url');
@@ -246,7 +256,7 @@ function speedycache_handle_tab(){
 		tab.siblings().hide();
 		tab.css('display', 'flex');
 		nav.find('.speedycache-nav-selected').removeClass('speedycache-nav-selected');
-		nav.find('a[href=#'+hash+']').addClass('speedycache-nav-selected')
+		nav.find('a[href=\\#'+hash+']').addClass('speedycache-nav-selected')
 		return
 	}
 	
@@ -254,7 +264,7 @@ function speedycache_handle_tab(){
 	tab.siblings().hide();
 	tab.css('display', 'flex');
 	nav.find('.speedycache-nav-selected').removeClass('speedycache-nav-selected');
-	nav.find('a[href=#'+hash+']').addClass('speedycache-nav-selected')
+	nav.find('a[href=\\#'+hash+']').addClass('speedycache-nav-selected')
 
 }
 
