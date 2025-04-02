@@ -68,6 +68,8 @@ class Cache {
 	}
 
 	static function create(&$content){
+		global $speedycache;
+
 		$cache_path = self::cache_path();
 
 		if(!file_exists($cache_path)){
@@ -84,6 +86,12 @@ class Cache {
 		$cache_path = wp_normalize_path($cache_path);
 
 		file_put_contents($cache_path, $content . "\n<!-- ".esc_html($mobile)."Cache by SpeedyCache https://speedycache.com -->");
+
+		if(function_exists('gzencode') && !empty($speedycache->options['gzip'])){
+			$gzidded_content = gzencode($content . "\n<!-- ".esc_html($mobile)."Cache by SpeedyCache https://speedycache.com -->");
+			file_put_contents($cache_path . '.gz', $gzidded_content);
+		}
+
 		delete_option('speedycache_html_size');
 		delete_option('speedycache_assets_size');
 	}
@@ -367,6 +375,11 @@ class Cache {
 		if($rule['prefix'] === 'page'){
 			return is_page();
 		}
+
+		if($rule['prefix'] === 'post_id' && !empty($rule['content'])){
+			$excluded_ids = is_array($rule['content']) ? $rule['content'] : explode(',', $rule['content']);
+			return in_array(get_queried_object_id(), $excluded_ids);
+		}
 		
 		if($rule['prefix'] === 'category'){
 			return is_category();
@@ -426,8 +439,8 @@ class Cache {
 		return $urls;
 	}
 	
-	// Deppricated since 1.2.0 do not use it
-	// Just to prevent site breaking
+	// Depricated since 1.2.0 do not use it
+	// Just to prevent site from breaking
 	static function create_dir($path, $content, $type = ''){
 	}
 	

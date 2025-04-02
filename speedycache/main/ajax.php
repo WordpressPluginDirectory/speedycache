@@ -70,6 +70,8 @@ class Ajax{
 		$options['purge_interval_unit'] = Util::sanitize_request('purge_interval_unit', 'days');
 		$options['purge_enable_exact_time'] = isset($_REQUEST['purge_enable_exact_time']);
 		$options['purge_exact_time'] = Util::sanitize_request('purge_exact_time', 0);
+		$options['auto_purge_fonts'] = isset($_REQUEST['auto_purge_fonts']);
+		$options['auto_purge_gravatar'] = isset($_REQUEST['auto_purge_gravatar']);
 
 		wp_clear_scheduled_hook('speedycache_purge_cache');
 		wp_clear_scheduled_hook('speedycache_preload');
@@ -112,7 +114,7 @@ class Ajax{
 		$options['delay_js'] = isset($_REQUEST['delay_js']);
 		$options['delay_js_mode'] = isset($_REQUEST['delay_js_mode']) ? Util::sanitize_request('delay_js_mode') : '';
 		$options['delay_js_excludes'] = !empty($_REQUEST['delay_js_excludes']) ? explode("\n", sanitize_textarea_field(wp_unslash($_REQUEST['delay_js_excludes']))) : [];
-		$options['delay_js_scripts'] = !empty($_REQUEST['delay_js_scripts']) ? explode("\n", sanitize_textarea_field(wp_unslash($_REQUEST['delay_js_scripts']))) : [];
+		$options['delay_js_scripts'] = !empty($_REQUEST['delay_js_scripts']) ? array_unique(array_map('trim', explode("\n", sanitize_textarea_field(wp_unslash($_REQUEST['delay_js_scripts']))))) : [];
 		$options['render_blocking'] = isset($_REQUEST['render_blocking']);
 		$options['render_blocking_excludes'] = isset($_REQUEST['render_blocking_excludes']) ? explode("\n", sanitize_textarea_field(wp_unslash($_REQUEST['render_blocking_excludes']))) : [];
 		$options['disable_emojis'] = isset($_REQUEST['disable_emojis']);
@@ -216,6 +218,7 @@ class Ajax{
 		$options['port'] = Util::sanitize_request('port');
 		$options['username'] = Util::sanitize_request('username');
 		$options['password'] = Util::sanitize_request('password');
+		$options['hashed_prefix'] = substr(md5(site_url()), 0, 12);
 		$options['ttl'] = Util::sanitize_request('ttl', 0);
 		$options['db-id'] = Util::sanitize_request('db-id', 0);
 		$options['persistent'] = isset($_REQUEST['persistent']);
@@ -502,7 +505,7 @@ class Ajax{
 		$type = Util::sanitize_request('type');
 		$prefix = Util::sanitize_request('prefix');
 		
-		$single_prefixes = ['homepage', 'category', 'tag', 'post', 'page', 'archive', 'attachment', 'googleanalytics', 'woocommerce_items_in_cart'];
+		$single_prefixes = ['homepage', 'category', 'tag', 'post', 'page', 'archive', 'attachment', 'googleanalytics', 'woocommerce_items_in_cart', 'post_id'];
 		
 		if(empty($_REQUEST['content']) && !in_array($prefix, $single_prefixes)){
 			wp_send_json_error(__('You need to fill the content field', 'speedycache'));
@@ -513,6 +516,10 @@ class Ajax{
 		$rule['type'] = $type;
 		$rule['prefix'] = $prefix;
 		$rule['content'] = !empty($_REQUEST['content']) ? Util::sanitize_request('content') : '';
+		if($type == 'post_id' && !empty($rule['content'])){
+			$rule['content'] = explode(',', $rule['content']);
+		}
+
 		array_push($excludes, $rule);
 		
 		update_option('speedycache_exclude', $excludes);

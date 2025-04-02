@@ -11,6 +11,21 @@
 		jQuery('.speedycache-save-settings-wrapper button').on('click', speedycache_save_settings);
 		jQuery('#speedycache-analyze').on('click', speedycache_analyze_speed);
 		
+		jQuery('.speedycache-tooltip-link').on('mouseover', function(){
+			let jEle = jQuery(this),
+			tooltip = jEle.find('.speedycache-link-tooltip'),
+			elementHeight = Math.ceil(tooltip.outerHeight()/2);
+
+			tooltip.fadeIn('fast').css({
+                top: `-${elementHeight+10}px`, // Position it above the parent
+            });
+		});
+		
+		jQuery('.speedycache-tooltip-link').on('mouseleave', function(){
+			let jEle = jQuery(this);
+			jEle.find('.speedycache-link-tooltip').hide();
+		});
+		
 		// Delay JS
 		jQuery('#speedycache_delay_js').change(function() {
 			if(!jQuery(this).is(':checked')){
@@ -168,6 +183,21 @@
 			
 			speedycache_toggle_settings_link(jQuery(this));
 			speedycache_open_modal(jQuery(this));
+		});
+
+		// Add Suggested Scripts
+		var $textarea = jQuery('#speedycache_delay_js_scripts');
+
+		jQuery('.speedycache-delay-suggestions').on('click', function(event) {
+			event.preventDefault();
+			if($textarea.length){
+				var $suggestions_text = jQuery('.speedycache-modal-scripts').text().trim().replace(/<br\s*\/?>/gi, '\n').replace(/\n\s+/g, '\n').replace(/\s+\n/g, '\n').replace(/\n+/g, '\n'),
+				current_text = $textarea.val().trim(),
+				new_text = current_text ? current_text + '\n' + $suggestions_text : $suggestions_text;
+				//Only add unique values
+				var unique_text = [...new Set(new_text.split('\n'))].join('\n');
+				$textarea.val(unique_text);
+			}
 		});
 		
 		//Event Listener for Settings link for popup options
@@ -397,7 +427,7 @@ function speedycache_update_excluded_prefix(){
 	val = jEle.val(),
 	content = jQuery('#speedycache-exclude-rule-content').closest('.speedycache-input-wrap');
 	
-	if(val == 'contain' || val == 'exact' || val == 'startwith'){
+	if(val == 'contain' || val == 'exact' || val == 'startwith' || val == 'post_id'){
 		content.show();
 		return;
 	}
@@ -414,6 +444,16 @@ function speedycache_update_excludes(){
 	jEle.find('span').addClass('speedycache-spinner-active');
 	
 	form_data = form.serializeArray();
+	let prefix_field = form_data.find(field => field.name === 'prefix');
+	let content_field = form_data.find(field => field.name === 'content');
+
+	if (prefix_field && prefix_field.value === 'post_id' && content_field) {
+		if (!/^\d+(,\d+)*$/.test(content_field.value)) {
+			alert("Invalid format! Only numbers and commas are allowed, without starting, ending, or consecutive commas.");
+			jEle.find('span').removeClass('speedycache-spinner-active');
+			return;
+		}
+	}
 
 	jQuery.ajax({
 		url : speedycache_ajax.url,
@@ -443,6 +483,15 @@ function speedycache_update_excludes(){
 //Close SpeedyCache Modal
 function speedycache_close_modal() {
 	jQuery('.speedycache-modal-footer > button, .speedycache-close-modal').on('click', function() {
+
+		//Remove duplicate entries when Submit or Close Button is clicked
+		var $textarea = jQuery(this).closest('.speedycache-modal').find('#speedycache_delay_js_scripts');
+		if ($textarea.length) {
+			var current_text = $textarea.val().trim();
+			var unique_text = [...new Set(current_text.split('\n'))].join('\n');
+			$textarea.val(unique_text);
+		}
+
 		jQuery(this).closest('.speedycache-modal').find('form').trigger('reset');
 		jQuery(this).closest('.speedycache-modal *').off();
 		jQuery(this).closest('.speedycache-modal').css('visibility','hidden');

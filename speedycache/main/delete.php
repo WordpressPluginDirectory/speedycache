@@ -106,6 +106,13 @@ class Delete{
 
 			// Cache path for desktop cache
 			$all_path = glob(Util::cache_path('all') . $file);
+			$gz_path = glob(Util::cache_path('all') . $file .'.gz');
+			
+			$all_path = array_merge(
+				is_array($all_path) ? $all_path : [], 
+				is_array($gz_path) ? $gz_path : []
+			);
+
 			if(!empty($all_path)){
 				$cache_paths = array_merge($cache_paths, $all_path);
 			}
@@ -212,7 +219,7 @@ class Delete{
 
 		$files = array_diff(scandir($dir), ['..', '.']);
 
-		foreach($files as $file){			
+		foreach($files as $file){
 			if(is_dir($dir.'/'.$file)){
 				self::rmdir($dir.'/'.$file);
 				continue;
@@ -305,6 +312,22 @@ class Delete{
 
 			self::rec_clean_expired($path);
 		}
+
+		// Assets are deleted only if the lifetime is more than 10 hours,  
+		// because only then is the entire cache deleted.  
+		// Cached assets may be used on multiple pages,  
+		// so we must ensure they are not deleted unless all cached pages are removed.
+		if(self::$cache_lifespan > 10 * HOUR_IN_SECONDS){
+			self::minified();
+
+			if(!empty($speedycache->options['auto_purge_fonts'])){
+				self::local_fonts();
+			}
+
+			if(!empty($speedycache->options['auto_purge_gravatar'])){
+				self::gravatar();
+			}
+		}
 		
 		// We will delete it even if the cache does not gets deleted
 		delete_option('speedycache_html_size');
@@ -313,6 +336,11 @@ class Delete{
 		if(class_exists('\SpeedyCache\Logs')){
 			\SpeedyCache\Logs::log('delete');
 			\SpeedyCache\Logs::action();
+		}
+		
+		// Preload the cached
+		if(self::$cache_lifespan > 10 * HOUR_IN_SECONDS && !empty($speedycache->options['preload'])){
+			\SpeedyCache\Preload::build_preload_list();
 		}
 	}
 	

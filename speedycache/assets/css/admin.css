@@ -355,6 +355,23 @@ color: currentcolor;
 	width:100%;
 }
 
+.speedycache-delay-suggestions{
+position: absolute; 
+top: 12px;
+right: 40px;
+background: var(--speedycache-color);
+color: #fff; 
+border: none;
+border-radius: 7px;
+box-shadow: 1px 0 5px 0 #ccc;
+padding: 8px 20px;
+font-weight: bold;
+cursor: pointer;
+display: flex; 
+align-items: center; 
+gap: 10px;
+}
+
 /*Modal Classes start here*/
 .speedycache-modal{
 display:flex !important;
@@ -479,6 +496,12 @@ font-family: monospace;
 background-color: #e4dcdc;
 border-radius: 6px;
 padding: 10px;
+}
+
+.speedycache-modal-scripts{
+display: block;
+max-height: 100px;
+overflow-y: auto;
 }
 /*Ends Modal Classes*/
 
@@ -1097,4 +1120,38 @@ display:flex;
 flex-direction:column;
 gap:5px;
 margin-top:8px;
+}
+
+.speedycache-link-tooltip{
+display:none;
+position:absolute;
+left:50%;
+transform: translate(-50%, -50%);
+background-color: white;
+border-radius: 15px;
+max-width: 300px;
+width: 300px;
+padding: 13px 18px;
+z-index:20;
+border: 1px solid rgb(0 0 0 / 5%);
+box-shadow: 0 0 #0000, 0 0 #0000, 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1);
+}
+
+.speedycache-link-tooltip h4{
+color:black;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.speedycache-link-tooltip p{
+margin:5px 0 0 0;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.speedycache-tooltip-link{
+position:relative;
+margin: 0 2px;
 }
