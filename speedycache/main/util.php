@@ -142,6 +142,7 @@ class Util{
 		if(!file_exists(WP_CONTENT_DIR .'/speedycache-config/')){
 			if(mkdir(WP_CONTENT_DIR .'/speedycache-config/', 0755, true)){
 				touch(WP_CONTENT_DIR .'/speedycache-config/index.html');
+				file_put_contents(WP_CONTENT_DIR .'/speedycache-config/.htaccess', 'deny from all');
 			}
 		}
 
@@ -264,6 +265,23 @@ class Util{
 			'display' => __('SpeedyCache Cache Preload cron', 'speedycache'),
 		];
 
+		return $schedules;
+	}
+	
+	static function custom_cron($schedules){
+
+		// Every 14 days (Fortnight)
+		$schedules['speedycache_fortnight'] = [
+			'interval' => 14 * DAY_IN_SECONDS,
+			'display' => __('Once Every Fortnight', 'speedycache'),
+		];
+
+		// Monthly (approx 30 days)
+		$schedules['speedycache_monthly'] = [
+			'interval' => 30 * DAY_IN_SECONDS,
+			'display' => __('Once Monthly', 'speedycache'),
+		];
+		
 		return $schedules;
 	}
 	
