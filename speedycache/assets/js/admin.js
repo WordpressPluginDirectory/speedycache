@@ -1,5 +1,5 @@
 (function($){
-	window.addEventListener('DOMContentLoaded', function(){
+	$(document).ready(function () {
 		speedycache_handle_tab();
 		
 		window.addEventListener('hashchange', speedycache_handle_tab);
@@ -299,6 +299,7 @@
 		jQuery('.speedycache-flush-db').on('click', speedycache_flush_objects);
 		jQuery('.speedycache-import-settings').on('click', speedycache_import_settings);
 		jQuery('.speedycache-export-settings').on('click', speedycache_export_settings);
+		jQuery('.speedycache-reset-settings').on('click', speedycache_reset_settings);
 		jQuery('#speedycache-license-btn').on('click', speedycache_verify_license);
 	});
 })(jQuery);
@@ -370,12 +371,12 @@ function speedycache_save_settings(){
 		// Need to show a tick if the save was success
 		if(!has_error){
 			let check = jEle.find('svg.speedycache-spinner-done');
-      if(check){
-  			check.addClass('speedycache-spinner-done-active');
-  			setTimeout(() => {
-  				check.removeClass('speedycache-spinner-done-active');
-  			}, 2000);
-      }
+			if(check){
+				check.addClass('speedycache-spinner-done-active');
+				setTimeout(() => {
+					check.removeClass('speedycache-spinner-done-active');
+				}, 2000);
+			}
 		}
 	});
 }
@@ -660,7 +661,7 @@ function speedycache_add_preload_resource() {
 	form_data.forEach((field) => {
 		form_val[field.name] = field.value;
 		
-		let non_required_fields = ['fetch_priority', 'device'];
+		let non_required_fields = ['fetch_priority', 'device', 'preload_resource_pages'];
 		if(!field.value && !non_required_fields.includes(field.name)){
 			error = true;
 		}
@@ -871,6 +872,40 @@ function speedycache_export_settings(){
 		},
 		error: function(){
 			alert('Export failed. Please try again.');
+		}
+	}).always(function(){
+		spinner.removeClass('speedycache-spinner-active');
+	});
+}
+
+function speedycache_reset_settings(e){
+  e.preventDefault();
+
+  if(!confirm('This will reset all SpeedyCache settings to their default values. Your current custom settings will be lost. Do you want to continue?')){
+    return;
+  }
+
+  let jEle = jQuery(e.target);
+  spinner = jEle.find('.speedycache-spinner');
+  spinner.addClass('speedycache-spinner-active');
+
+	jQuery.ajax({
+		url : speedycache_ajax.url,
+		type : 'POST',
+		data : {
+			action: 'speedycache_reset_settings',
+			nonce : speedycache_ajax.nonce
+		},
+		success : function(response){
+			if(response.success){
+				alert(response.data);
+				location.reload();
+			} else {
+				alert(response.data || 'Something went wrong while resetting settings.');
+			}
+		},
+		error : function(){
+			alert('Ajax error occurred');
 		}
 	}).always(function(){
 		spinner.removeClass('speedycache-spinner-active');
