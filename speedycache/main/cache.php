@@ -157,7 +157,14 @@ class Cache {
 		
 		if(defined('WP_CLI') && !empty(WP_CLI)) return false;
 
+		// HTTP and HTTPS share one cache file, so an HTTP render of an HTTPS site would serve http:// assets (mixed content) to everyone.
+		// site_url() follows is_ssl(), so a proxied site where is_ssl() is false is already rendering http:// assets; we trust is_ssl() alone.
+		if(!is_ssl() && (strpos(get_option('siteurl'), 'https://') === 0 || strpos(get_option('home'), 'https://') === 0)) return false;
+
 		if(defined('REST_REQUEST') && !empty(REST_REQUEST)) return false;
+		
+		// check comment author
+		if(preg_grep('/comment_author_/i', array_keys($_COOKIE))) return false;
 
 		if(function_exists('http_response_code') && (http_response_code() > 309)) return false;
 		

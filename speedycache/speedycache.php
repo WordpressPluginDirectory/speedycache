@@ -3,7 +3,7 @@
 Plugin Name: SpeedyCache
 Plugin URI: https://speedycache.com
 Description: SpeedyCache is a plugin that helps you reduce the load time of your website by means of caching, minification, and compression of your website.
-Version: 1.4.2
+Version: 1.4.3
 Author: Softaculous Team
 Author URI: https://speedycache.com/
 Text Domain: speedycache
@@ -51,7 +51,7 @@ if(defined('SPEEDYCACHE_VERSION')) {
 	return;
 }
 
-define('SPEEDYCACHE_VERSION', '1.4.2');
+define('SPEEDYCACHE_VERSION', '1.4.3');
 define('SPEEDYCACHE_DIR', dirname(__FILE__));
 define('SPEEDYCACHE_FILE', __FILE__);
 define('SPEEDYCACHE_BASE', plugin_basename(SPEEDYCACHE_FILE));
@@ -124,6 +124,16 @@ function speedycache_load_plugin(){
 	
 	// This file is just to handle deprecation.
 	include_once __DIR__ . '/functions.php';
+	
+	// There was an issue were for some users update was stuck, and free was able to get updated through auto updater option
+	// removing these filters fixes that issue, and our Pro update blocker was improved in 1.4.1
+	// This check can be removed 1 year from 08.10.2026
+	if(defined('SPEEDYCACHE_PRO_VERSION') && version_compare(SPEEDYCACHE_PRO_VERSION, '1.4.0', '=')){
+		foreach(['site_transient_update_plugins', 'pre_site_transient_update_plugins'] as $hook){
+			remove_filter($hook, 'speedycache_pro_disable_manual_update_for_plugin'); // Older Pro used the default priority
+			remove_filter($hook, 'speedycache_pro_disable_manual_update_for_plugin', 99);
+		}
+	}
 
 	$speedycache->options = get_option('speedycache_options', []);
 	$speedycache->settings['noscript'] = '';

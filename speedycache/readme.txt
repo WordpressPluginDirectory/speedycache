@@ -4,7 +4,7 @@ Tags: cache, minify, pagespeed, seo, cdn, wordpress cache, website cache, lazy l
 Requires at least: 4.7
 Tested up to: 7.1
 Requires PHP: 7.0
-Stable tag: 1.4.2
+Stable tag: 1.4.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -179,6 +179,18 @@ You can report security bugs through the Patchstack Vulnerability Disclosure Pro
 4. SpeedyCache Exclude page
 
 == Changelog ==
+
+
+= 1.4.3 (8th October 2026) =
+* [Minor Security Fix] There an issue related to unauthenticated comment has been fixed reported by **Kuba** [Wordfence].
+* [Improvement Pro] Added a Clear Schedule button in the Image Optimization Scheduled Tasks modal to stop all queued image optimizations and reverts.
+* [Improvement] The MCP Adapter is now installed from WordPress.org instead of GitHub, so its updates are handled by WordPress itself.
+* [Bug-Fix Pro] Delay JS now runs delayed scripts in their original order, earlier they could run out of order and cause "is not defined" errors.
+* [Bug-Fix Pro] Delay JS now runs the DOMContentLoaded and load listeners added by delayed scripts, earlier that code never ran.
+* [Bug-Fix Pro] Delay JS no longer delays non-JavaScript script tags like application/json, which caused a SyntaxError in the console.
+* [Bug-Fix Pro] Delay JS no longer breaks inline scripts that set a src in their code, like the Microsoft Clarity snippet.
+* [Bug-Fix Pro] Defer JS no longer wraps Delay JS scripts in DOMContentLoaded, which stopped them from running when both options were enabled.
+* [Bug-Fix] Fixed an issue where a page requested over HTTP could get cached with http:// asset URLs and served to HTTPS visitors, causing mixed content errors.
 
 = 1.4.2 (23rd September 2026) =
 * [Improvement Pro] Added Code Signing: Every update now verifies the code signature to ensure secure updates.

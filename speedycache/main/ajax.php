@@ -971,58 +971,9 @@ class Ajax{
 			wp_send_json_error(__('The MCP Adapter cannot be installed because the Enable AI Abilities Toggle in the right sidebar is turned off. Please check it and try again.', 'speedycache'));
 		}
 
-		$requested_action = !empty($_POST['adapter_action']) ? sanitize_key(wp_unslash($_POST['adapter_action'])) : 'install';
-
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 		$installed_file = \SpeedyCache\Abilities::get_installed_mcp_adapter_file();
-
-		// Update path -> fetch the latest release and re-install over the existing plugin.
-		if($requested_action === 'update'){
-
-			if(empty($installed_file)){
-				wp_send_json_error(__('The MCP Adapter is not installed yet, so there is nothing to update.', 'speedycache'));
-			}
-
-			$release = \SpeedyCache\Abilities::get_mcp_adapter_release();
-			
-			if(empty($release['download_url'])){
-				wp_send_json_error(__('Could not resolve the MCP Adapter download URL. Please try again in a moment.', 'speedycache'));
-			}
-
-			// Include WordPress core File and Upgrader dependencies.
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			require_once ABSPATH . 'wp-admin/includes/misc.php';
-			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-
-			$skin = new \WP_Ajax_Upgrader_Skin();
-			$upgrader = new \Plugin_Upgrader($skin);
-			$result   = $upgrader->install($release['download_url'], ['overwrite_package' => true]);
-
-			if(is_wp_error($result)){
-				wp_send_json_error($result->get_error_message());
-			}
-
-			if(false === $result || !$upgrader->plugin_info()){
-				$errors = method_exists($skin, 'get_errors') ? $skin->get_errors() : new \WP_Error();
-				$message = is_wp_error($errors) && $errors->get_error_message() ? $errors->get_error_message() : __('The MCP Adapter could not be updated.', 'speedycache');
-				wp_send_json_error($message);
-			}
-
-			// Activate the updated plugin file.
-			$plugin_file = $upgrader->plugin_info() ?: $installed_file;
-			$activated   = activate_plugin($plugin_file);
-
-			if(is_wp_error($activated)){
-				wp_send_json_error($activated->get_error_message());
-			}
-
-			wp_send_json_success([
-				'message' => sprintf(__('MCP Adapter updated to version %s and activated.', 'speedycache'), $release['version']),
-				'state'   => 'active',
-				'version' => $release['version'],
-			]);
-		}
 
 		// Installed but inactive -> just activate.
 		if($installed_file){
@@ -1036,46 +987,47 @@ class Ajax{
 			]);
 		}
 
-		// Nothing installed yet -> fetch the release and run the upgrader.
-		if($requested_action !== 'install'){
-			wp_send_json_error(__('Invalid adapter action.', 'speedycache'));
+		if(!current_user_can('install_plugins')){
+			wp_send_json_error(__('You do not have permission to install plugins.', 'speedycache'));
 		}
 
-		$release = \SpeedyCache\Abilities::get_mcp_adapter_release();
-		if(empty($release['download_url'])){
-			wp_send_json_error(__('Could not resolve the MCP Adapter download URL. Please try again in a moment.', 'speedycache'));
-		}
-
+		// Nothing installed yet -> install from WordPress.org, updates are then handled by WordPress itself.
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/misc.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+
+		$api = plugins_api('plugin_information', ['slug' => 'mcp-adapter', 'fields' => ['sections' => false]]);
+
+		if(is_wp_error($api)){
+			wp_send_json_error($api->get_error_message());
+		}
 
 		$skin     = new \WP_Ajax_Upgrader_Skin();
 		$upgrader = new \Plugin_Upgrader($skin);
-		$result   = $upgrader->install($release['download_url']);
+		$result   = $upgrader->install($api->download_link);
 
 		if(is_wp_error($result)){
 			wp_send_json_error($result->get_error_message());
 		}
 
 		if(false === $result || !$upgrader->plugin_info()){
-			$errors = method_exists($skin, 'get_errors') ? $skin->get_errors() : new \WP_Error();
+			$errors = $skin->get_errors();
 			$message = is_wp_error($errors) && $errors->get_error_message() ? $errors->get_error_message() : __('The MCP Adapter could not be installed.', 'speedycache');
 			wp_send_json_error($message);
 		}
 
 		// Activate the newly installed plugin package.
-		$plugin_file = $upgrader->plugin_info();
-		$activated    = activate_plugin($plugin_file);
+		$activated = activate_plugin($upgrader->plugin_info());
 
 		if(is_wp_error($activated)){
 			wp_send_json_error($activated->get_error_message());
 		}
 
 		wp_send_json_success([
-			'message' => sprintf(__('MCP Adapter %s installed and activated.', 'speedycache'), $release['version']),
+			'message' => sprintf(__('MCP Adapter %s installed and activated.', 'speedycache'), $api->version),
 			'state'   => 'active',
-			'version' => $release['version'],
+			'version' => $api->version,
 		]);
 	}
 

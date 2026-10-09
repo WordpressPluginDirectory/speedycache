@@ -1384,7 +1384,44 @@ function speedycache_image_optimization() {
 	jQuery('span.speedycache-scheduled-count').on('click', function() {
 		speedycache_open_modal(jQuery(this));
 	});
-	
+
+	jQuery('.speedycache-img-clear-schedule').on('click', function() {
+		if(!confirm('Are you sure you want to remove all the scheduled image tasks?')){
+			return;
+		}
+
+		var btn = jQuery(this),
+		spinner = btn.find('.speedycache-spinner');
+
+		btn.prop('disabled', true);
+		spinner.addClass('speedycache-spinner-active');
+
+		jQuery.ajax({
+			type : 'POST',
+			url : speedycache_ajax.url,
+			data : {
+				'action' : 'speedycache_img_clear_schedule',
+				'security' : speedycache_ajax.nonce
+			},
+			success : function(res) {
+				if(res.success){
+					// Spinner keeps spinning till the page reloads.
+					location.reload();
+					return;
+				}
+
+				btn.prop('disabled', false);
+				spinner.removeClass('speedycache-spinner-active');
+				alert(res.data ? res.data : 'Something went wrong try again later!');
+			},
+			error : function(){
+				btn.prop('disabled', false);
+				spinner.removeClass('speedycache-spinner-active');
+				alert('Ajax error occurred');
+			}
+		});
+	});
+
 	//Listeners Starts here
 	
 	//Search button listener

@@ -82,8 +82,6 @@ jQuery(document).ready(function($){
 		
 		if(action === 'activate'){
 			busyLabel = CFG.i18n.activating;
-		}else if(action === 'update'){
-			busyLabel = CFG.i18n.updating;
 		}
 
 		$btn.html(busyLabel);
@@ -94,7 +92,6 @@ jQuery(document).ready(function($){
 			type: 'POST',
 			data: {
 				action: 'speedycache_install_mcp_adapter',
-				adapter_action: action,
 				nonce: CFG.nonce
 			},
 			success: function(response){

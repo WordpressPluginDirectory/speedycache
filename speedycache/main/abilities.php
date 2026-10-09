@@ -34,10 +34,6 @@ class Abilities{
 	static $APP_PASSWORD_NAME = 'SpeedyCache AI Agents';
 	static $APP_PASSWORD_APP_ID = 'speedycache-mcp';
 
-	// GitHub release endpoint for the official WordPress MCP Adapter plugin.
-	static $MCP_ADAPTER_RELEASE_URL = 'https://api.github.com/repos/WordPress/mcp-adapter/releases/latest';
-	static $MCP_ADAPTER_RELEASE_CACHE = 'speedycache_mcp_adapter_release';
-
 	// REST endpoint (provided by the adapter / WP 6.9+) used to test the connection.
 	static $ABILITIES_ENDPOINT = '/wp-json/wp-abilities/v1/abilities';
 
@@ -72,7 +68,6 @@ class Abilities{
 			'i18n' => [
 				'installing' => esc_html__('Installing...', 'speedycache'),
 				'activating' => esc_html__('Activating...', 'speedycache'),
-				'updating' => esc_html__('Updating...', 'speedycache'),
 				'generating' => esc_html__('Generating...', 'speedycache'),
 				'testing' => esc_html__('Testing...', 'speedycache'),
 				'genErrTitle' => esc_html__('Could not generate the password.', 'speedycache'),
@@ -93,17 +88,6 @@ class Abilities{
 		$username = function_exists('wp_get_current_user') ? wp_get_current_user()->user_login : '';
 		$app_pass_placeholder = esc_html__('your-application-password', 'speedycache');
 		$user_placeholder = $username ?: esc_html__('<your-username>', 'speedycache');
-		$adapter_installed_version = $adapter_installed ? self::get_installed_mcp_adapter_version() : '';
-		$adapter_latest_version = '';
-		$adapter_update_available = false;
-
-		if($adapter_installed && $adapter_installed_version){
-			$release = self::get_mcp_adapter_release();
-			if(!empty($release['version']) && version_compare($release['version'], $adapter_installed_version, '>')){
-				$adapter_latest_version = $release['version'];
-				$adapter_update_available = true;
-			}
-		}
 
 		// Setup progress
 		$done_count = 0;
@@ -205,10 +189,6 @@ class Abilities{
 									<?php
 										if($adapter_active){
 											echo '<p>' . esc_html__('The MCP Adapter plugin is installed and active. Your site now exposes an MCP server that AI clients can connect to.', 'speedycache') . '</p>';
-											if($adapter_update_available){
-												echo '<p class="speedycache-abilities-adapter-update-notice">' . sprintf(esc_html__('A new version of the MCP Adapter is available (installed: %1$s, latest: %2$s).', 'speedycache'), '<strong>' . esc_html($adapter_installed_version) . '</strong>', '<strong>' . esc_html($adapter_latest_version) . '</strong>') . '</p>';
-												echo '<button type="button" class="speedycache-button speedycache-btn-black speedycache-abilities-adapter-btn" data-action="update">' . esc_html__('Update MCP Adapter', 'speedycache') . '</button>';
-											}
 										}elseif($adapter_installed){
 											echo '<p>' . esc_html__('The MCP Adapter is installed but not active. Activate it to enable the MCP server.', 'speedycache') . '</p>';
 											echo '<button type="button" class="speedycache-button speedycache-btn-black speedycache-abilities-adapter-btn" data-action="activate">' . esc_html__('Activate MCP Adapter', 'speedycache') . '</button>';
@@ -289,7 +269,6 @@ class Abilities{
 										'copied' => esc_html__('Copied!', 'speedycache'),
 										'installing' => esc_html__('Installing...', 'speedycache'),
 										'activating' => esc_html__('Activating...', 'speedycache'),
-										'updating' => esc_html__('Updating...', 'speedycache'),
 										'generating' => esc_html__('Generating...', 'speedycache'),
 										'testing' => esc_html__('Testing...', 'speedycache'),
 										'genErrTitle' => esc_html__('Could not generate the password.', 'speedycache'),
@@ -389,7 +368,7 @@ class Abilities{
 							<ul class="speedycache-abilities-resource-list">
 								<li><a href="https://speedycache.com/docs/site-optimization/how-to-setup-mcp-adapter-and-abilities" target="_blank" rel="noopener noreferrer"><?php esc_html_e('SpeedyCache documentation', 'speedycache'); ?></a></li>
 								<li><a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Model Context Protocol', 'speedycache'); ?></a></li>
-								<li><a href="https://github.com/WordPress/mcp-adapter" target="_blank" rel="noopener noreferrer"><?php esc_html_e('WordPress MCP Adapter', 'speedycache'); ?></a></li>
+								<li><a href="https://wordpress.org/plugins/mcp-adapter/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('WordPress MCP Adapter', 'speedycache'); ?></a></li>
 							</ul>
 						</div>
 					</div>
@@ -535,30 +514,6 @@ class Abilities{
 	}
 
 	/**
-	 * Read the installed MCP Adapter version from the plugin headers.
-	 *
-	 * @return string Empty string when the adapter is not installed.
-	 */
-	static function get_installed_mcp_adapter_version(){
-
-		$file = self::get_installed_mcp_adapter_file();
-
-		if('' === $file){
-			return '';
-		}
-
-		if(!function_exists('get_plugins')){
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		$all_plugins = get_plugins();
-		if(!isset($all_plugins[ $file ]['Version'])){
-			return '';
-		}
-		return (string)$all_plugins[ $file ]['Version'];
-	}
-
-	/**
 	 * Does the current user already have an MCP app password created by SpeedyCache?
 	 *
 	 * @return bool
@@ -612,36 +567,5 @@ class Abilities{
 			'ok' => !empty($ok),
 			'message' => (string)$message,
 		]);
-	}
-
-	// Fetch the latest MCP Adapter release info from GitHub (cached 1 hour).
-	static function get_mcp_adapter_release(){
-
-		$cached = get_transient(\SpeedyCache\Abilities::$MCP_ADAPTER_RELEASE_CACHE);
-		if(false !== $cached && is_array($cached)){
-			return $cached;
-		}
-
-		$response = wp_remote_get(\SpeedyCache\Abilities::$MCP_ADAPTER_RELEASE_URL, [
-			'timeout' => 10,
-			'headers' => ['Accept' => 'application/vnd.github+json'],
-		]);
-
-		if(is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)){
-			return [];
-		}
-
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-		if(!is_array($body) || empty($body['tag_name']) || empty($body['assets'][0]['browser_download_url'])){
-			return [];
-		}
-
-		$payload = [
-			'version' => ltrim((string)$body['tag_name'], 'v'),
-			'download_url' => esc_url_raw($body['assets'][0]['browser_download_url']),
-		];
-
-		set_transient(\SpeedyCache\Abilities::$MCP_ADAPTER_RELEASE_CACHE, $payload, DAY_IN_SECONDS);
-		return $payload;
 	}
 }
